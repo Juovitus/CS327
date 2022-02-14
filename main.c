@@ -5,11 +5,9 @@
 #define MAP_X_WIDTH 80
 #define MAP_Y_WIDTH 21
 
-char symbols[] = {'C', 'M', '.', ';', '%', '#'};
-// . = Clearing
-// ; = Grass
-// % = Boulder
-// # = Path
+char symbols[] = {'C', 'M', '.', ';', '%', '#', '@'};
+// 'C' = PokeCenter, 'M' = PokeMart, '.' = Clearing, ';' = TallGrass, '%' = Boulder, '#' = FootPath, '@' = Player
+
 
 typedef struct mapGrid{
     char map[MAP_X_WIDTH][MAP_Y_WIDTH];
@@ -18,6 +16,12 @@ typedef struct mapGrid{
 
 mapGrid *currentMap;
 mapGrid *worldMap[399][399];
+
+typedef struct playerCharacter{
+    int worldMapX, worldMapY, mapX, mapY;
+} playerCharacter;
+
+playerCharacter *pc;
 
 void DisplayMap(mapGrid *map){
     for(int y = 0; y < MAP_Y_WIDTH; y++){
@@ -42,6 +46,9 @@ void DisplayMap(mapGrid *map){
                     break;
                 case '#' :
                     printf("\033[0;36m%c", c);
+                    break;
+                case '@' :
+                    printf("\033[0;35m%c", c);
                     break;
                 default:
                     printf("\033[0;30m%c", map->map[x][y]);
@@ -257,12 +264,29 @@ int CheckBoundsValid(int x, int xMax){
     }
 }
 
+void PlacePlayerCharacter(int currX, int currY, playerCharacter *pc){
+    pc = malloc(sizeof(playerCharacter));
+    int randomPlayerLocation = (rand() % ((MAP_X_WIDTH - 2) - 2)) + 2;
+    //Let's look for a spot we can place a player, and if it's found then place em idfk
+    for(int y = 1; y < MAP_Y_WIDTH - 1; y++){
+        if(worldMap[currX][currY]->map[randomPlayerLocation][y] == symbols[5]){
+            worldMap[currX][currY]->map[randomPlayerLocation][y] = symbols[6];
+            //We now want to also update player info
+            pc->worldMapX = currX;
+            pc->worldMapY = currY;
+            pc->mapX = randomPlayerLocation;
+            pc->mapY = y;
+        }
+    }
+}
+
 void GetUserInput() {
     //Start in center
     int currX = 199;
     int currY = 199;
     int isValidMovement = ' ';
     GenerateMap(currX, currY);
+    PlacePlayerCharacter(currX, currY, pc);
     while (1) {
         system("clear");
         DisplayMap(worldMap[currX][currY]);
