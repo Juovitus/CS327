@@ -1,0 +1,15 @@
+2/7/2022
+	Bug found where path can sometimes generate in very bottom right of map
+	Fixed bug by changing how the random placements were generated.
+	Adding multiple maps
+2/8/2022
+	Started lining up roads on adjacent maps
+	Adding 2d array of maps aka world map
+	Generating maps only when needed
+	Started getting user input
+2/9/2022
+	Turns out getting user input is REALLY annoying, tons of bugs
+	Fixed bugs with purging user input(dumb asf)
+	Creating manhattan distance for generation of pokestops
+	I think I'm done?
+	Bug->Only shows incorrect movement half the time...the fuck?

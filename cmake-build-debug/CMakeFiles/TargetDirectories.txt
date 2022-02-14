@@ -1,0 +1,3 @@
+/home/student/Documents/CS327/Poke/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/student/Documents/CS327/Poke/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/student/Documents/CS327/Poke/cmake-build-debug/CMakeFiles/Poke.dir

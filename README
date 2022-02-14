@@ -1,0 +1,14 @@
+int main()
+	This class is the main method of the project and simply calls GenerateMap()
+void GenerateMap()
+	This class generates the entire map(for starts)
+	It generates the border, randomly generates the openings on the cardinal
+	borders, fills the map with clearings, pathfinds between the openings,
+	randomly places pokecenter and pokemart and randomly places two grass clearings.
+	^Changed to generate maps in a 2d array only when visited
+void GetUserInput()
+	This class gets user input and evaluates it.
+int CheckBoundsValid(int x, int xMax)
+	Checks if x is valid, should probably have a lower bound
+void DisplayMap(mapGrid *map)
+	Literally displays the map given to it
