@@ -60,3 +60,4 @@ cmake-build-debug/
 *.json
 cmake-build-debug/.ninja_deps
 *.o
+Poke
