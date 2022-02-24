@@ -55,3 +55,8 @@ dkms.conf
 #Yep
 cmake-build-debug/
 .idea/
+*.json
+*.json
+*.json
+cmake-build-debug/.ninja_deps
+*.o

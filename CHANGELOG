@@ -12,4 +12,15 @@
 	Fixed bugs with purging user input(dumb asf)
 	Creating manhattan distance for generation of pokestops
 	I think I'm done?
-	Bug->Only shows incorrect movement half the time...the fuck?
+	Bug->Only shows incorrect movement half the time...wtf
+2/20/2022
+    Started project, no idea what im doing, professors code is confusing
+2/21/2022
+    Bashed head against wall for many hours trying to figure out what im doing
+2/22/2022
+    Implemented the start of dijkstra's up to neighbor checking
+2/23/2022
+    Added neighbor checking
+    Found bug in creation of costMap, where I was using it map[y][x] but initialized it as map[x][y].
+    Adapted Distance map to be Rival and Hiker
+    Changed various things around project for increased readability -> Mainly symbols and adding some constants.

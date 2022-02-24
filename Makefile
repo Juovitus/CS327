@@ -8,6 +8,10 @@ LIBS=-lm
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-Poke: main.o
+Poke: main.o heap.c heap.h
 	$(CC) -o $@ $^ $(CFLAGS)
 	rm -f *.o
+
+clean:
+	rm -f *.o output Poke
+	rm -f *.tar.gz
