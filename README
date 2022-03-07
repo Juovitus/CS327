@@ -1,5 +1,5 @@
 int IsBoundsValid(int x, int xMax)
-	Checks if x is valid, should probably have a lower bound
+    Checks if x is valid, should probably have a lower bound
 
 static int32_t Path_Compare(const void *key, const void *with)
     IDK the instructor gave us this, it compares costs
@@ -17,20 +17,20 @@ void PlacePlayerCharacter(int currX, int currY)
     Places player at a random spot given the location of the current map
 
 void DisplayMap(mapGrid *map)
-    	Literally displays the map given to it
+    Literally displays the map given to it
 
 void GenerateMap()
-	Generates the entire map(for starts)
-	It generates the border, randomly generates the openings on the cardinal
-	borders, fills the map with clearings, pathfinds between the openings,
-	randomly places pokecenter and pokemart and randomly places two grass clearings.
-	^Changed to generate maps in a 2d array only when visited
+    Generates the entire map(for starts)
+    It generates the border, randomly generates the openings on the cardinal
+    borders, fills the map with clearings, pathfinds between the openings,
+    randomly places pokecenter and pokemart and randomly places two grass clearings.
+    ^Changed to generate maps in a 2d array only when visited
 
 void GetUserInput()
-	This class gets user input and evaluates it.
+    This class gets user input and evaluates it.
 
 int main()
-	This class is the main method of the project and simply calls GenerateMap()
+    This class is the main method of the project and simply calls GenerateMap()
 
 int GenerateRandomX(int num)
     Generates a random value for x with num being the given lower bound and returns it
