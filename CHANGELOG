@@ -24,3 +24,9 @@
     Found bug in creation of costMap, where I was using it map[y][x] but initialized it as map[x][y].
     Adapted Distance map to be Rival and Hiker
     Changed various things around project for increased readability -> Mainly symbols and adding some constants.
+3/6/2022
+    Added player movement
+    Added number of trainers as an intake
+    Added trainers onto the map
+    Found bug where players could move onto all trainers except first hiker - fixed this bug
+3/7/2022

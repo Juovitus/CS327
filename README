@@ -1,4 +1,4 @@
-int CheckBoundsValid(int x, int xMax)
+int IsBoundsValid(int x, int xMax)
 	Checks if x is valid, should probably have a lower bound
 
 static int32_t Path_Compare(const void *key, const void *with)
@@ -31,3 +31,25 @@ void GetUserInput()
 
 int main()
 	This class is the main method of the project and simply calls GenerateMap()
+
+int GenerateRandomX(int num)
+    Generates a random value for x with num being the given lower bound and returns it
+
+int GenerateRandomY(int num)
+    Generates a random value for y with num being the given lower bound and returns it
+
+void MovePlayerCharacter(char userInputCharacter)
+    Determines intended movement based off input character, checks if valid movement and if it is, moves PC.
+    TO MOVE PLAYER, USE 8=NORTH, 6=EAST, 2=SOUTH, 4=WEST (NESW FOR NUMPAD ENTRY)
+
+int IsValidPlayerMovement(int currX, int currY)
+    Takes input of prospective destination we want to move to. Evaluates if it's a valid movement, returns 0 or 1 for t/f.
+
+int IsPositionInMap(int x, int y)
+    Checks if a given X/Y position is within the current map.
+
+void PlaceNPCs()
+    Generates random positions for NPCS and places them if able, priority for certain NPC types.
+
+isValidNPCPlacement(int x, int y)
+    Checks if given position for an npc placement is valid, returns integer equivalent to t/f.
