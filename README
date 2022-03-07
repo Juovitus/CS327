@@ -53,3 +53,15 @@ void PlaceNPCs()
 
 isValidNPCPlacement(int x, int y)
     Checks if given position for an npc placement is valid, returns integer equivalent to t/f.
+
+Controls:
+    n | Move to North map
+    e | Move to East map
+    s | Move to South map
+    w | Move to West map
+    f | Fly to map, ex: f 150 150
+    8 | Moves PC North
+    6 | Moves PC East
+    2 | Moves PC South
+    4 | Moves PC West
+    q | Quits the game
