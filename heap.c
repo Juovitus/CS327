@@ -173,7 +173,7 @@ static void heap_consolidate(heap_t *h)
 {
   uint32_t i;
   heap_node_t *x, *y, *n;
-  heap_node_t *a[64]; /* Need ceil(lg(h->size)), so this is good  *
+  heap_node_t *a[64]; /* Need ceil(lg(npcHeap->size)), so this is good  *
                        * to the limit of a 64-bit address space,  *
                        * and much faster than any lg calculation. */
 
@@ -356,7 +356,7 @@ char *print_int(const void *v)
 
 int main(int argc, char *argv[])
 {
-  heap_t h;
+  heap_t npcHeap;
   int **keys;
   heap_node_t **a;
   /*  int *p;*/
@@ -372,28 +372,28 @@ int main(int argc, char *argv[])
   assert((keys = calloc(n, sizeof (*keys))));
   assert((a = calloc(n, sizeof (*a))));
 
-  heap_init(&h, compare, free);
+  heap_init(&npcHeap, compare, free);
 
   for (i = 0; i < n; i++) {
     assert((keys[i] = malloc(sizeof (*keys[i]))));
     *keys[i] = i;
-    a[i] = heap_insert(&h, keys[i]);
+    a[i] = heap_insert(&npcHeap, keys[i]);
   }
 
-  print_heap(&h, print_int);
+  print_heap(&npcHeap, print_int);
   printf("------------------------------------\n");
   
-  heap_remove_min(&h);
+  heap_remove_min(&npcHeap);
   assert((keys[0] = malloc(sizeof (*keys[0]))));
   *keys[0] = 0;
-  a[0] = heap_insert(&h, keys[0]);
+  a[0] = heap_insert(&npcHeap, keys[0]);
   for (i = 0; i < 100 * n; i++) {
     j = rand() % n;
     /*    assert((p = malloc (sizeof (*p))));*/
     (*(int *) a[j]->datum)--;
     /*    (*p)--;*/
-    heap_decrease_key_no_replace(&h, a[j]);
-    print_heap(&h, print_int);
+    heap_decrease_key_no_replace(&npcHeap, a[j]);
+    print_heap(&npcHeap, print_int);
     printf("------------------------------------\n");
   }
 

@@ -6,10 +6,10 @@ LIBS=-lm
 #DEPS = 
 
 %.o: %.c
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -g -c -o $@ $< $(CFLAGS)
 
 Poke: main.o heap.c heap.h
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -g -o $@ $^ $(CFLAGS)
 	rm -f *.o
 
 clean:

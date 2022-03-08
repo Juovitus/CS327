@@ -54,6 +54,30 @@ void PlaceNPCs()
 isValidNPCPlacement(int x, int y)
     Checks if given position for an npc placement is valid, returns integer equivalent to t/f.
 
+void MoveNPCS()
+    Calls specific npc movement functions and displays map inbetween each NPC movement
+
+void MoveRandomWalker(nonPlayerCharacter* npc)
+    Moves a RandomWalker if able
+
+void MoveWanderer(nonPlayerCharacter* npc)
+    Moves a Wanderer if able
+
+void MovePacer (nonPlayerCharacter* npc)
+    Moves a Pacer if able
+
+void MoveRival (nonPlayerCharacter* npc)
+    Moves a Rival if able
+
+void MoveHiker (nonPlayerCharacter* npc)
+    Moves a Hiker if able
+
+int IsNpcAtXY(int x, int y)
+    Loops through all NPC's on the map and check's if they're at given location
+
+static int NPC_COMPARE(const void *key, const void *with)
+    Compares movetimes of two NPC's
+
 Controls:
     n | Move to North map
     e | Move to East map
@@ -64,4 +88,5 @@ Controls:
     6 | Moves PC East
     2 | Moves PC South
     4 | Moves PC West
+    5 | Player stands still
     q | Quits the game

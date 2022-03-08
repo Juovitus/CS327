@@ -30,3 +30,11 @@
     Added trainers onto the map
     Found bug where players could move onto all trainers except first hiker - fixed this bug
 3/7/2022
+    Changed cost maps to make trainer locations infinite cost.
+    Implemented Hiker Movement
+    Implemented Rival Movement
+    Implement Pacer Movement
+3/8/2022
+    Implemented Wanderer Movement
+    Added Player standing still movement command
+    Implemented remaining NPC movement & more.

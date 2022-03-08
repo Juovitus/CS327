@@ -5,6 +5,7 @@
 #include <string.h>
 #include <limits.h>
 #include "heap.h"
+#include <unistd.h>
 
 #define MAP_X_LENGTH 80
 #define MAP_Y_LENGTH 21
@@ -24,6 +25,7 @@
 #define HIKER_COST 0
 #define RIVAL_COST 1
 #define PLAYER_COST 2
+#define OTHER_COST 3
 
 char SYMBOLS[] = {'C', 'M', '.', ';', '%', '#', '@', 'h', 'r', 'p', 'w', 's', 'n'};
 //COST ORDER = HIKER_COST->RIVAL_COST->PC->OTHERS
@@ -32,9 +34,11 @@ int32_t COST_BUILDING[] = {INT32_MAX, INT32_MAX, 10, INT32_MAX};
 int32_t COST_TALL_GRASS[] = {15, 20, 20, 20};
 //Default number of trainers if not passed in a number
 int numTrainers = 10;
+int currentTime = 0;
 
 typedef struct nonPlayerCharacter{
-    int npcType, mapX, mapY, isAlive;
+    int npcType, mapX, mapY, isAlive, nextMoveTime, direction;
+    char spawnTileType;
 } nonPlayerCharacter;
 
 
@@ -44,6 +48,7 @@ typedef struct mapGrid{
     uint32_t hikerMap[MAP_X_LENGTH][MAP_Y_LENGTH];
     uint32_t rivalMap[MAP_X_LENGTH][MAP_Y_LENGTH];
     nonPlayerCharacter npc[MAP_X_LENGTH * MAP_Y_LENGTH];
+    heap_t npcHeap;
 } mapGrid;
 mapGrid *currentMap;
 mapGrid *worldMap[399][399];
@@ -64,6 +69,78 @@ typedef struct path {
     int32_t cost;
 } path_t;
 
+void DisplayMap(mapGrid *map){
+    //Display dijkstra's stuff
+    for(int i = 0; i < 2; i++){
+        //GenerateCostMap(i);//THIS GENERATES COST MAP FOR RIVAL AND HIKER---
+        //PrintCostMap(i);   //---THIS WILL PRINT THE COST MAP OF THE CURRENT MAP FOR HIKERS AND RIVALS---
+    }
+    for(int y = 0; y < MAP_Y_LENGTH; y++){
+        for(int x = 0; x < MAP_X_LENGTH; x++){
+            //Lets color code the output so it looks better :)
+            char c;
+
+            if(pc != NULL && x == pc->mapX && y == pc->mapY){
+                c = SYMBOLS[SYMBOL_PLAYER];
+            }else{
+                c = map->map[x][y];
+            }
+
+            for(int n = 0; n < numTrainers; n++){
+                if(currentMap->npc[n].isAlive == 1 && currentMap->npc[n].mapX == x && currentMap->npc[n].mapY == y){
+                    c = SYMBOLS[currentMap->npc[n].npcType];
+                }
+            }
+
+            switch(c) {
+                case 'C' :
+                    printf("\033[0;35m%c", c);
+                    break;
+                case 'M' :
+                    printf("\033[0;34m%c", c);
+                    break;
+                case '.' :
+                    printf("\033[0;30m%c", c);
+                    break;
+                case ';' :
+                    printf("\033[0;32m%c", c);
+                    break;
+                case '%' :
+                    printf("\033[0;31m%c", c);
+                    break;
+                case '#' :
+                    printf("\033[0;36m%c", c);
+                    break;
+                case '@' :
+                    printf("\033[0;35m%c", c);
+                    break;
+                case 'h' :
+                    printf("\033[0;35m%c", c);
+                    break;
+                case 'r' :
+                    printf("\033[0;35m%c", c);
+                    break;
+                case 'p' :
+                    printf("\033[0;35m%c", c);
+                    break;
+                case 'w' :
+                    printf("\033[0;35m%c", c);
+                    break;
+                case 's' :
+                    printf("\033[0;35m%c", c);
+                    break;
+                case 'n' :
+                    printf("\033[0;35m%c", c);
+                    break;
+                default:
+                    printf("\033[0;30m%c", map->map[x][y]);
+            }
+        }
+        //Break to a new line
+        printf("\n");
+    }
+}
+
 int IsBoundsValid(int x, int xMax){
     if(x > xMax || x < 0){
         return 0;
@@ -74,6 +151,268 @@ int IsBoundsValid(int x, int xMax){
 
 static int32_t Path_Compare(const void *key, const void *with) {
     return ((path_t *) key)->cost - ((path_t *) with)->cost;
+}
+
+static int NPC_COMPARE(const void *key, const void *with){
+    return ((nonPlayerCharacter *) key)->nextMoveTime - ((nonPlayerCharacter *) with)->nextMoveTime;
+}
+
+int IsNpcAtXY(int x, int y){
+    for(int i = 0; i < numTrainers; i++){
+        if(currentMap->npc[i].mapX == x && currentMap->npc[i].mapY == y && currentMap->npc[i].isAlive == 1){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void MoveHiker(nonPlayerCharacter* npc){
+    int minCost = INT32_MAX;
+    int xMin = 0, yMin = 0;
+    for(int x = -1; x < 2; x++){
+        for(int y = -1; y < 2; y++){
+            if(x == 0 && y == 0){
+                continue;
+            }else{
+                if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || (npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY) ||
+                   IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
+                    continue;
+                }else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] <= minCost){
+                    if(rand() < RAND_MAX / 2 && currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == minCost){
+                        continue;
+                    }
+                    minCost = currentMap->hikerMap[npc->mapX + x][npc->mapY + y];
+                    xMin = x;
+                    yMin = y;
+                }
+            }
+        }
+    }
+
+    int cost;
+
+    if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_POKE_CENTER]){
+        cost = COST_BUILDING[HIKER_COST];
+    } else if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_POKE_MART]){
+        cost = COST_BUILDING[HIKER_COST];
+    } else if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_PATH]){
+        cost = COST_PATH_OR_CLEARING[HIKER_COST];
+    } else if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_TALL_GRASS]){
+        cost = COST_TALL_GRASS[HIKER_COST];
+    } else if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_CLEARING]){
+        cost = COST_PATH_OR_CLEARING[HIKER_COST];
+    }else{
+        cost = INT32_MAX;
+    }
+    npc->nextMoveTime += cost;
+    npc->mapX += xMin;
+    npc->mapY += yMin;
+}
+
+void MoveRival (nonPlayerCharacter* npc){
+    int minCost = INT32_MAX;
+    int xMin = 0, yMin = 0;
+    for(int x = -1; x < 2; x++){
+        for(int y = -1; y < 2; y++){
+            if(x == 0 && y == 0){
+                continue;
+            }else{
+                if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || (npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY) ||
+                   IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
+                    continue;
+                }else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] <= minCost){
+                    if(rand() < RAND_MAX / 2 && currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == minCost){
+                        continue;
+                    }
+                    minCost = currentMap->rivalMap[npc->mapX + x][npc->mapY + y];
+                    xMin = x;
+                    yMin = y;
+                }
+            }
+        }
+    }
+
+    int cost;
+
+    if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_POKE_CENTER]){
+        cost = COST_BUILDING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_POKE_MART]){
+        cost = COST_BUILDING[RIVAL_COST];
+    } else if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_PATH]){
+        cost = COST_PATH_OR_CLEARING[RIVAL_COST];
+    } else if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_TALL_GRASS]){
+        cost = COST_TALL_GRASS[RIVAL_COST];
+    } else if(currentMap->map[npc->mapX + xMin][npc->mapY + yMin] == SYMBOLS[SYMBOL_CLEARING]){
+        cost = COST_PATH_OR_CLEARING[RIVAL_COST];
+    }else{
+        cost = INT32_MAX;
+    }
+    npc->nextMoveTime += cost;
+    npc->mapX += xMin;
+    npc->mapY += yMin;
+}
+
+void MovePacer (nonPlayerCharacter* npc){
+    int xDiff = 0, yDiff = 0;
+    switch(npc->direction){
+        case 0:
+            yDiff--;
+            break;
+        case 1:
+            xDiff++;
+            break;
+        case 2:
+            yDiff++;
+            break;
+        case 3:
+            xDiff--;
+            break;
+        default:
+            printf("\nShouldn't be here?\n");
+            break;
+    }
+
+    int cost;
+
+    if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_POKE_CENTER]){
+        cost = COST_BUILDING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_POKE_MART]){
+        cost = COST_BUILDING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_PATH]){
+        cost = COST_PATH_OR_CLEARING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_TALL_GRASS]){
+        cost = COST_TALL_GRASS[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_CLEARING]){
+        cost = COST_PATH_OR_CLEARING[OTHER_COST];
+    }else{
+        cost = INT32_MAX;
+    }
+
+    if(cost == INT32_MAX || (npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY) || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
+        npc->direction = (npc->direction + 2) % 4;
+    } else{
+        npc->mapX += xDiff;
+        npc->mapY += yDiff;
+    }
+    if(cost == INT32_MAX){
+        cost = 10;
+    }
+    npc->nextMoveTime += cost;
+}
+
+void MoveWanderer (nonPlayerCharacter* npc){
+    int xDiff = 0, yDiff = 0;
+    switch(npc->direction){
+        case 0:
+            yDiff--;
+            break;
+        case 1:
+            xDiff++;
+            break;
+        case 2:
+            yDiff++;
+            break;
+        case 3:
+            xDiff--;
+            break;
+    }
+
+    int cost;
+
+    if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == npc->spawnTileType){
+        cost = COST_BUILDING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_POKE_MART] && currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == npc->spawnTileType){
+        cost = COST_BUILDING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_PATH] && currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == npc->spawnTileType){
+        cost = COST_PATH_OR_CLEARING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_TALL_GRASS] && currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == npc->spawnTileType){
+        cost = COST_TALL_GRASS[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_CLEARING] && currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == npc->spawnTileType){
+        cost = COST_PATH_OR_CLEARING[OTHER_COST];
+    }else{
+        cost = INT32_MAX;
+    }
+
+    if(cost == INT32_MAX || (npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY) || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
+        npc->direction = rand() % 4; //Set random direction 1-4
+    } else{
+        npc->mapX += xDiff;
+        npc->mapY += yDiff;
+    }
+    if(cost == INT32_MAX){
+        cost = 10;
+    }
+    npc->nextMoveTime += cost;
+}
+
+void MoveRandomWalker(nonPlayerCharacter* npc){
+    int xDiff = 0, yDiff = 0;
+    switch(npc->direction){
+        case 0:
+            yDiff--;
+            break;
+        case 1:
+            xDiff++;
+            break;
+        case 2:
+            yDiff++;
+            break;
+        case 3:
+            xDiff--;
+            break;
+    }
+
+    int cost;
+
+    if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_POKE_CENTER]){
+        cost = COST_BUILDING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_POKE_MART]){
+        cost = COST_BUILDING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_PATH]){
+        cost = COST_PATH_OR_CLEARING[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_TALL_GRASS]){
+        cost = COST_TALL_GRASS[OTHER_COST];
+    } else if(currentMap->map[npc->mapX + xDiff][npc->mapY + yDiff] == SYMBOLS[SYMBOL_CLEARING]){
+        cost = COST_PATH_OR_CLEARING[OTHER_COST];
+    }else{
+        cost = INT32_MAX;
+    }
+
+    if(cost == INT32_MAX || (npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY) || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
+        npc->direction = rand() % 4; //Set random direction 1-4
+    } else{
+        npc->mapX += xDiff;
+        npc->mapY += yDiff;
+    }
+    if(cost == INT32_MAX){
+        cost = 10;
+    }
+    npc->nextMoveTime += cost;
+}
+
+void MoveNPCS(){
+    //Find lowest cost NPC(S)
+    while(currentMap->npcHeap.size > 0 && ((nonPlayerCharacter*) heap_peek_min(&currentMap->npcHeap))->nextMoveTime <= currentTime){
+        nonPlayerCharacter* npc = (nonPlayerCharacter*) heap_remove_min(&currentMap->npcHeap);
+        if(npc->npcType == SYMBOL_HIKER){
+            MoveHiker(npc);
+        }else if(npc->npcType == SYMBOL_RIVAL){
+            MoveRival(npc);
+        }else if(npc->npcType == SYMBOL_PACER){
+            MovePacer(npc);
+        }else if(npc->npcType == SYMBOL_WANDERER){
+            MoveWanderer(npc);
+        }else if(npc->npcType == SYMBOL_RANDOM_WALKER){
+           MoveRandomWalker(npc);
+        }else{
+            continue;
+        }
+        //Add to heap
+        heap_insert(&currentMap->npcHeap, npc);
+        usleep(250000);
+        system("clear");
+        DisplayMap(currentMap);
+    }
 }
 
 int32_t Dijkstra_Path(mapGrid *map, struct Point from, struct Point to, uint32_t characterType){
@@ -118,7 +457,7 @@ int32_t Dijkstra_Path(mapGrid *map, struct Point from, struct Point to, uint32_t
     heap_init(&h, Path_Compare, NULL);
     for(y = 1; y < MAP_Y_LENGTH-1; y++){
         for(x = 1; x < MAP_X_LENGTH-1; x++){
-            if(map->map[x][y] != SYMBOLS[SYMBOL_BOULDER]){
+            if(map->map[x][y] != SYMBOLS[SYMBOL_BOULDER] && !IsNpcAtXY(x, y)){
                 if(characterType == PLAYER_COST){
                     path[y][x].hn = heap_insert(&h, &path[y][x]);
                 }else if(map->map[x][y] != SYMBOLS[SYMBOL_POKE_CENTER] && map->map[x][y] != SYMBOLS[SYMBOL_POKE_MART]){
@@ -277,6 +616,8 @@ int isValidNPCPlacement(int x, int y){
 }
 
 void PlaceNPCs(){
+    //Initialize NPC heap
+    heap_init(&currentMap->npcHeap, NPC_COMPARE, NULL);
     int x = GenerateRandomX(1);
     int y = GenerateRandomY(1);
     for(int i = 0; i < numTrainers; i++){
@@ -284,13 +625,23 @@ void PlaceNPCs(){
             x = GenerateRandomX(1);
             y = GenerateRandomY(1);
         }
-        if(i < numTrainers){
             //Place type of npc
-            currentMap->npc[i].npcType = 7 + (i % 6);
+            currentMap->npc[i].npcType = 7 + (i % 6);  // <----Generate all types of NPCS
+            //currentMap->npc[i].npcType = SYMBOL_RIVAL;        //---> SEEMS FINE
+            //currentMap->npc[i].npcType = SYMBOL_HIKER;        //---> SEEMS FINE
+            //currentMap->npc[i].npcType = SYMBOL_PACER;          //---> INFINITE LOOP?
+            //currentMap->npc[i].npcType = SYMBOL_RANDOM_WALKER;//---> INFINITE LOOP?
+            //currentMap->npc[i].npcType = SYMBOL_WANDERER;     //---> INFINITE LOOP?
+            //currentMap->npc[i].npcType = SYMBOL_STATIONARY;   //---> SEG FAULT?
+
             currentMap->npc[i].mapX = x;
             currentMap->npc[i].mapY = y;
             currentMap->npc[i].isAlive = 1;
-        }
+            currentMap->npc[i].direction = rand() % 4;
+            currentMap->npc[i].spawnTileType = currentMap->map[x][y];
+            //Set time of NPC and add to heap
+            currentMap->npc[i].nextMoveTime = currentTime;
+            heap_insert(&currentMap->npcHeap, &currentMap->npc[i]);
     }
 }
 
@@ -299,13 +650,14 @@ void PlacePlayerCharacter(){
     //Let's look for a spot we can place a player, and if it's found then update where we want to place the player for starts
     for(int y = 1; y < MAP_Y_LENGTH - 1; y++){
         if(currentMap->map[randomPlayerLocationX][y] == SYMBOLS[SYMBOL_PATH]){
-            //worldMap[currX][currY]->map[randomPlayerLocationX][y] = SYMBOLS[SYMBOL_PLAYER];
             //We now want to also update player info
             pc->mapX = randomPlayerLocationX;
             pc->mapY = y;
             break;
         }
     }
+    GenerateCostMap(0);
+    GenerateCostMap(1);
 }
 
 int IsPositionInMap(int x, int y){
@@ -313,78 +665,6 @@ int IsPositionInMap(int x, int y){
         return 0;
     }else{
         return 1;
-    }
-}
-
-void DisplayMap(mapGrid *map){
-    //Display dijkstra's stuff
-    for(int i = 0; i < 2; i++){
-        //GenerateCostMap(i);//THIS GENERATES COST MAP FOR RIVAL AND HIKER---
-        //PrintCostMap(i);   //---THIS WILL PRINT THE COST MAP OF THE CURRENT MAP FOR HIKERS AND RIVALS---
-    }
-    for(int y = 0; y < MAP_Y_LENGTH; y++){
-        for(int x = 0; x < MAP_X_LENGTH; x++){
-            //Lets color code the output so it looks better :)
-            char c;
-
-            if(pc != NULL && x == pc->mapX && y == pc->mapY){
-                c = SYMBOLS[SYMBOL_PLAYER];
-            }else{
-                c = map->map[x][y];
-            }
-
-            for(int n = 0; n < numTrainers; n++){
-                if(currentMap->npc[n].isAlive == 1 && currentMap->npc[n].mapX == x && currentMap->npc[n].mapY == y){
-                    c = SYMBOLS[currentMap->npc[n].npcType];
-                }
-            }
-
-            switch(c) {
-                case 'C' :
-                    printf("\033[0;35m%c", c);
-                    break;
-                case 'M' :
-                    printf("\033[0;34m%c", c);
-                    break;
-                case '.' :
-                    printf("\033[0;30m%c", c);
-                    break;
-                case ';' :
-                    printf("\033[0;32m%c", c);
-                    break;
-                case '%' :
-                    printf("\033[0;31m%c", c);
-                    break;
-                case '#' :
-                    printf("\033[0;36m%c", c);
-                    break;
-                case '@' :
-                    printf("\033[0;35m%c", c);
-                    break;
-                case 'h' :
-                    printf("\033[0;35m%c", c);
-                    break;
-                case 'r' :
-                    printf("\033[0;35m%c", c);
-                    break;
-                case 'p' :
-                    printf("\033[0;35m%c", c);
-                    break;
-                case 'w' :
-                    printf("\033[0;35m%c", c);
-                    break;
-                case 's' :
-                    printf("\033[0;35m%c", c);
-                    break;
-                case 'n' :
-                    printf("\033[0;35m%c", c);
-                    break;
-                default:
-                    printf("\033[0;30m%c", map->map[x][y]);
-            }
-        }
-        //Break to a new line
-        printf("\n");
     }
 }
 
@@ -614,30 +894,55 @@ void MovePlayerCharacter(char userInputCharacter) {
     //This is moving the pc for now IG idc dude
     //8 is moving up so lets move the PC up
     if (userInputCharacter == '8') {
+        GenerateCostMap(0);
+        GenerateCostMap(1);
         //Check if the incremented movement is valid(Which we're going up so its y-1)
         if (IsValidPlayerMovement(pc->mapX, pc->mapY - 1)) {
             //Set updated position of player
             pc->mapY = pc->mapY - 1;
         }
     } else if (userInputCharacter == '6') {
+        GenerateCostMap(0);
+        GenerateCostMap(1);
         //Check if the incremented movement is valid(Which we're going up so its x+1)
         if (IsValidPlayerMovement(pc->mapX + 1, pc->mapY)) {
             //Set updated position of player
             pc->mapX = pc->mapX + 1;
         }
     } else if (userInputCharacter == '2') {
+        GenerateCostMap(0);
+        GenerateCostMap(1);
         //Check if the incremented movement is valid(Which we're going down so its y+1)
         if (IsValidPlayerMovement(pc->mapX, pc->mapY + 1)) {
             //Set updated position of player
             pc->mapY = pc->mapY + 1;
         }
     } else if (userInputCharacter == '4') {
+        GenerateCostMap(0);
+        GenerateCostMap(1);
         //Check if the incremented movement is valid(Which we're going up so its x-1)
         if (IsValidPlayerMovement(pc->mapX - 1, pc->mapY)) {
             //Set updated position of player
             pc->mapX = pc->mapX - 1;
         }
+    }else if(userInputCharacter == '5'){
+        //Stand still
     }
+
+    if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_POKE_CENTER]){
+        currentTime += COST_BUILDING[PLAYER_COST];
+    } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_POKE_MART]){
+        currentTime += COST_BUILDING[PLAYER_COST];
+    } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_PATH]){
+        currentTime += COST_PATH_OR_CLEARING[PLAYER_COST];
+    } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_TALL_GRASS]){
+        currentTime +=COST_TALL_GRASS[PLAYER_COST];
+    } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_CLEARING]){
+        currentTime += COST_PATH_OR_CLEARING[PLAYER_COST];
+    }
+
+    //After the player moves we move NPC'S
+    MoveNPCS();
 }
 
 void GetUserInput() {
@@ -649,7 +954,7 @@ void GetUserInput() {
     PlacePlayerCharacter();
     while (1) {
         system("clear");
-        DisplayMap(worldMap[currX][currY]);
+        DisplayMap(currentMap);
         char userInputCharacter = ' ';
         int userInputX = -1, userInputY = -1;
         //This cleanses color output
@@ -677,14 +982,15 @@ void GetUserInput() {
                     GenerateMap(userInputX, userInputY);
                     currX = userInputX;
                     currY = userInputY;
-                    continue;
                 } else {
                     currentMap = worldMap[userInputX][userInputY];
                     currX = userInputX;
                     currY = userInputY;
-                    continue;
                 }
             }
+            //Generate new cost maps if we change maps
+            GenerateCostMap(0);
+            GenerateCostMap(1);
         } else if (userInputCharacter == 'q' || userInputCharacter == 'Q') {
             printf("You don't want to play this poorly made game anymore?='(\n");
             break;
@@ -699,6 +1005,9 @@ void GetUserInput() {
                 currY--;
                 currentMap = worldMap[currX][currY];
             }
+            //Generate new cost maps if we change maps
+            GenerateCostMap(0);
+            GenerateCostMap(1);
         } else if (userInputCharacter == 's' || userInputCharacter == 'S') {
             //Generate map to the south if applicable
             if (currY >= 398) {
@@ -710,6 +1019,9 @@ void GetUserInput() {
                 currY++;
                 currentMap = worldMap[currX][currY];
             }
+            //Generate new cost maps if we change maps
+            GenerateCostMap(0);
+            GenerateCostMap(1);
         } else if (userInputCharacter == 'e' || userInputCharacter == 'E') {
             //Generate map the east if applicable
             if (currX >= 398) {
@@ -721,6 +1033,9 @@ void GetUserInput() {
                 currX++;
                 currentMap = worldMap[currX][currY];
             }
+            //Generate new cost maps if we change maps
+            GenerateCostMap(0);
+            GenerateCostMap(1);
         } else if (userInputCharacter == 'w' || userInputCharacter == 'W') {
             //Generate map to the west if applicable
             if (currX <= 0) {
@@ -732,7 +1047,10 @@ void GetUserInput() {
                 currX--;
                 currentMap = worldMap[currX][currY];
             }
-        }else if(userInputCharacter == '8' || userInputCharacter == '6' || userInputCharacter == '2' || userInputCharacter == '4'){
+            //Generate new cost maps if we change maps
+            GenerateCostMap(0);
+            GenerateCostMap(1);
+        }else if(userInputCharacter == '8' || userInputCharacter == '6' || userInputCharacter == '2' || userInputCharacter == '4' || userInputCharacter == '5'){
             //Let's move the player
             MovePlayerCharacter(userInputCharacter);
         }
@@ -767,7 +1085,3 @@ int main(int argc, char *argv[]) {
     //Get user input
     GetUserInput();
 }
-
-
-
-
