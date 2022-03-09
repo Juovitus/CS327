@@ -34,13 +34,11 @@ int32_t COST_BUILDING[] = {INT32_MAX, INT32_MAX, 10, INT32_MAX};
 int32_t COST_TALL_GRASS[] = {15, 20, 20, 20};
 //Default number of trainers if not passed in a number
 int numTrainers = 10;
-int currentTime = 0;
 
 typedef struct nonPlayerCharacter{
     int npcType, mapX, mapY, isAlive, nextMoveTime, direction;
     char spawnTileType;
 } nonPlayerCharacter;
-
 
 typedef struct mapGrid{
     char map[MAP_X_LENGTH][MAP_Y_LENGTH];
@@ -49,6 +47,7 @@ typedef struct mapGrid{
     uint32_t rivalMap[MAP_X_LENGTH][MAP_Y_LENGTH];
     nonPlayerCharacter npc[MAP_X_LENGTH * MAP_Y_LENGTH];
     heap_t npcHeap;
+    int currentTime;
 } mapGrid;
 mapGrid *currentMap;
 mapGrid *worldMap[399][399];
@@ -392,7 +391,7 @@ void MoveRandomWalker(nonPlayerCharacter* npc){
 
 void MoveNPCS(){
     //Find lowest cost NPC(S)
-    while(currentMap->npcHeap.size > 0 && ((nonPlayerCharacter*) heap_peek_min(&currentMap->npcHeap))->nextMoveTime <= currentTime){
+    while(currentMap->npcHeap.size > 0 && ((nonPlayerCharacter*) heap_peek_min(&currentMap->npcHeap))->nextMoveTime <= currentMap->currentTime){
         nonPlayerCharacter* npc = (nonPlayerCharacter*) heap_remove_min(&currentMap->npcHeap);
         if(npc->npcType == SYMBOL_HIKER){
             MoveHiker(npc);
@@ -409,9 +408,9 @@ void MoveNPCS(){
         }
         //Add to heap
         heap_insert(&currentMap->npcHeap, npc);
-        //usleep(250000);
-        //system("clear");
-        //DisplayMap(currentMap);
+        usleep(250000);
+        system("clear");
+        DisplayMap(currentMap);
     }
 }
 
@@ -640,7 +639,7 @@ void PlaceNPCs(){
             currentMap->npc[i].direction = rand() % 4;
             currentMap->npc[i].spawnTileType = currentMap->map[x][y];
             //Set time of NPC and add to heap
-            currentMap->npc[i].nextMoveTime = currentTime;
+            currentMap->npc[i].nextMoveTime = currentMap->currentTime;
             heap_insert(&currentMap->npcHeap, &currentMap->npc[i]);
     }
 }
@@ -857,6 +856,7 @@ void GenerateMap(int newMapX, int newMapY) {
         currentMap->map[0][randomWestOpening] = SYMBOLS[SYMBOL_BOULDER];
     }
 
+    currentMap->currentTime = 0;
     currentMap->northOpening = randomNorthOpening;
     currentMap->eastOpening = randomEastOpening;
     currentMap->southOpening = randomSouthOpening;
@@ -930,15 +930,15 @@ void MovePlayerCharacter(char userInputCharacter) {
     }
 
     if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_POKE_CENTER]){
-        currentTime += COST_BUILDING[PLAYER_COST];
+        currentMap->currentTime += COST_BUILDING[PLAYER_COST];
     } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_POKE_MART]){
-        currentTime += COST_BUILDING[PLAYER_COST];
+        currentMap->currentTime += COST_BUILDING[PLAYER_COST];
     } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_PATH]){
-        currentTime += COST_PATH_OR_CLEARING[PLAYER_COST];
+        currentMap->currentTime += COST_PATH_OR_CLEARING[PLAYER_COST];
     } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_TALL_GRASS]){
-        currentTime +=COST_TALL_GRASS[PLAYER_COST];
+        currentMap->currentTime +=COST_TALL_GRASS[PLAYER_COST];
     } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_CLEARING]){
-        currentTime += COST_PATH_OR_CLEARING[PLAYER_COST];
+        currentMap->currentTime += COST_PATH_OR_CLEARING[PLAYER_COST];
     }
 
     //After the player moves we move NPC'S
