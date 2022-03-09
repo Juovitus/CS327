@@ -112,25 +112,25 @@ void DisplayMap(mapGrid *map){
                     printf("\033[0;36m%c", c);
                     break;
                 case '@' :
-                    printf("\033[0;35m%c", c);
+                    printf("\033[1;35m%c", c);
                     break;
                 case 'h' :
-                    printf("\033[0;35m%c", c);
+                    printf("\033[1;33m%c", c);
                     break;
                 case 'r' :
-                    printf("\033[0;35m%c", c);
+                    printf("\033[1;33m%c", c);
                     break;
                 case 'p' :
-                    printf("\033[0;35m%c", c);
+                    printf("\033[1;33m%c", c);
                     break;
                 case 'w' :
-                    printf("\033[0;35m%c", c);
+                    printf("\033[1;33m%c", c);
                     break;
                 case 's' :
-                    printf("\033[0;35m%c", c);
+                    printf("\033[1;33m%c", c);
                     break;
                 case 'n' :
-                    printf("\033[0;35m%c", c);
+                    printf("\033[1;33m%c", c);
                     break;
                 default:
                     printf("\033[0;30m%c", map->map[x][y]);
@@ -409,9 +409,9 @@ void MoveNPCS(){
         }
         //Add to heap
         heap_insert(&currentMap->npcHeap, npc);
-        usleep(250000);
-        system("clear");
-        DisplayMap(currentMap);
+        //usleep(250000);
+        //system("clear");
+        //DisplayMap(currentMap);
     }
 }
 
@@ -1068,7 +1068,7 @@ int main(int argc, char *argv[]) {
         if(isNum){
             numTrainers = atoi(argv[i]);
         }
-        if(strstr(argv[i], "--numTrainers")){
+        if(strstr(argv[i], "--numTrainers") || strstr(argv[i], "--numtrainers")){
             isNum = 1;
         }
     }
