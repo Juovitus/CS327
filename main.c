@@ -626,12 +626,6 @@ void PlaceNPCs(){
         }
             //Place type of npc
             currentMap->npc[i].npcType = 7 + (i % 6);  // <----Generate all types of NPCS
-            //currentMap->npc[i].npcType = SYMBOL_RIVAL;        //---> SEEMS FINE
-            //currentMap->npc[i].npcType = SYMBOL_HIKER;        //---> SEEMS FINE
-            //currentMap->npc[i].npcType = SYMBOL_PACER;          //---> INFINITE LOOP?
-            //currentMap->npc[i].npcType = SYMBOL_RANDOM_WALKER;//---> INFINITE LOOP?
-            //currentMap->npc[i].npcType = SYMBOL_WANDERER;     //---> INFINITE LOOP?
-            //currentMap->npc[i].npcType = SYMBOL_STATIONARY;   //---> SEG FAULT?
 
             currentMap->npc[i].mapX = x;
             currentMap->npc[i].mapY = y;
