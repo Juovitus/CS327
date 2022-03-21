@@ -3,9 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 #include "heap.h"
-#include <unistd.h>
 
 #define MAP_X_LENGTH 80
 #define MAP_Y_LENGTH 21
@@ -86,7 +84,7 @@ void DisplayMap(mapGrid *map){
             }
 
             for(int n = 0; n < numTrainers; n++){
-                if(currentMap->npc[n].isAlive == 1 && currentMap->npc[n].mapX == x && currentMap->npc[n].mapY == y){
+                if(currentMap->npc[n].mapX == x && currentMap->npc[n].mapY == y){
                     c = SYMBOLS[currentMap->npc[n].npcType];
                 }
             }
@@ -158,7 +156,7 @@ static int NPC_COMPARE(const void *key, const void *with){
 
 int IsNpcAtXY(int x, int y){
     for(int i = 0; i < numTrainers; i++){
-        if(currentMap->npc[i].mapX == x && currentMap->npc[i].mapY == y && currentMap->npc[i].isAlive == 1){
+        if(currentMap->npc[i].mapX == x && currentMap->npc[i].mapY == y){
             return 1;
         }
     }
@@ -408,9 +406,9 @@ void MoveNPCS(){
         }
         //Add to heap
         heap_insert(&currentMap->npcHeap, npc);
-        usleep(250000);
-        system("clear");
-        DisplayMap(currentMap);
+        //usleep(250000);
+        //system("clear");
+        //DisplayMap(currentMap);
     }
 }
 
@@ -606,7 +604,7 @@ int isValidNPCPlacement(int x, int y){
         return 0;
     }else{
         for(int i = 0; i < (MAP_Y_LENGTH * MAP_X_LENGTH) - 1; i++){
-            if(currentMap->npc[i].isAlive == 1 && currentMap->npc[i].mapX == x && currentMap->npc[i].mapY == y){
+            if(currentMap->npc[i].mapX == x && currentMap->npc[i].mapY == y){
                 return 0;
             }
         }
@@ -874,7 +872,7 @@ int IsValidPlayerMovement(int currX, int currY){
         return 0;
     }else{
         for(int i = 0; i < (MAP_X_LENGTH * MAP_Y_LENGTH) - 1; i++){
-            if(currentMap->npc[i].mapX == currX && currentMap->npc[i].mapY == currY && currentMap->npc[i].isAlive == 1){
+            if(currentMap->npc[i].mapX == currX && currentMap->npc[i].mapY == currY){
                 pc->isValidMovement = 0;
                 return 0;
             }
