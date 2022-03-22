@@ -25,6 +25,7 @@
 #define RIVAL_COST 1
 #define PLAYER_COST 2
 #define OTHER_COST 3
+#define ESCAPE_KEY 27
 
 char SYMBOLS[] = {'C', 'M', '.', ';', '%', '#', '@', 'h', 'r', 'p', 'w', 's', 'n'};
 //COST ORDER = HIKER_COST->RIVAL_COST->PC->OTHERS
@@ -75,7 +76,6 @@ void DisplayMap(mapGrid *map){
         //PrintCostMap(i);   //---THIS WILL PRINT THE COST MAP OF THE CURRENT MAP FOR HIKERS AND RIVALS---
     }
     initscr();
-
     init_pair(SYMBOL_POKE_CENTER, COLOR_WHITE, COLOR_BLACK);
     init_pair(SYMBOL_POKE_MART, COLOR_WHITE, COLOR_BLACK);
     init_pair(SYMBOL_CLEARING, COLOR_YELLOW, COLOR_BLACK);
@@ -208,6 +208,28 @@ int IsNpcAtXY(int x, int y){
     return 0;
 }
 
+void StartBattle(){
+    int leaveBattle = 0;
+    while(!leaveBattle){
+        //CLEAR SCREEN BEFORE BATTLE
+        clear();
+        printw("Temporary battle page\n");
+        printw("A wild Persian Appears!\n");
+        printw("   |\\---/|\n");
+        printw("   | ,_, |\n");
+        printw("    \\_`_/-..----.\n");
+        printw(" ___/ `   ' ,\"\"+ \\ \n");
+        printw("(__...'   __\\    |`.___.';\n");
+        printw("  (_,...'(_,.`__)/'.....+\n");
+        printw("You can use your escape key to exit,\notherwise you're stuck here cuddling with this cat.\nI know it sucks.");
+        refresh();
+        char userInput = getch();
+        if(userInput == ESCAPE_KEY){
+            leaveBattle = 1;
+        }
+    }
+}
+
 void MoveHiker(nonPlayerCharacter* npc){
     int minCost = INT32_MAX;
     int xMin = 0, yMin = 0;
@@ -216,7 +238,10 @@ void MoveHiker(nonPlayerCharacter* npc){
             if(x == 0 && y == 0){
                 continue;
             }else{
-                if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || (npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY) ||
+                //Start battle if moving onto player
+                if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY){
+                    StartBattle();
+                } else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == INT32_MAX ||
                    IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
                     continue;
                 }else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] <= minCost){
@@ -259,7 +284,10 @@ void MoveRival (nonPlayerCharacter* npc){
             if(x == 0 && y == 0){
                 continue;
             }else{
-                if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || (npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY) ||
+                //Start battle if moving onto player
+                if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY){
+                    StartBattle();
+                } else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == INT32_MAX ||
                    IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
                     continue;
                 }else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] <= minCost){
@@ -330,7 +358,10 @@ void MovePacer (nonPlayerCharacter* npc){
         cost = INT32_MAX;
     }
 
-    if(cost == INT32_MAX || (npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY) || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
+    //Start battle if moving onto player
+    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY) {
+        StartBattle(npc->npcType);
+    } else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = (npc->direction + 2) % 4;
     } else{
         npc->mapX += xDiff;
@@ -375,7 +406,10 @@ void MoveWanderer (nonPlayerCharacter* npc){
         cost = INT32_MAX;
     }
 
-    if(cost == INT32_MAX || (npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY) || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
+    //Start battle if moving onto player
+    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY){
+        StartBattle();
+    }else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = rand() % 4; //Set random direction 1-4
     } else{
         npc->mapX += xDiff;
@@ -420,7 +454,10 @@ void MoveRandomWalker(nonPlayerCharacter* npc){
         cost = INT32_MAX;
     }
 
-    if(cost == INT32_MAX || (npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY) || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
+    //Start battle if moving onto player
+    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY){
+        StartBattle();
+    } else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = rand() % 4; //Set random direction 1-4
     } else{
         npc->mapX += xDiff;
@@ -451,9 +488,6 @@ void MoveNPCS(){
         }
         //Add to heap
         heap_insert(&currentMap->npcHeap, npc);
-        //usleep(250000);
-        //system("clear");
-        //DisplayMap(currentMap);
     }
 }
 
@@ -488,6 +522,8 @@ int32_t Dijkstra_Path(mapGrid *map, struct Point from, struct Point to, uint32_t
                 costMap[x][y] = costTallGrass;
             } else if(map->map[x][y] == SYMBOLS[SYMBOL_CLEARING]){
                 costMap[x][y] = costClearing;
+            } else if(x == pc->mapX && y == pc->mapY){
+                costMap[x][y] = 0;
             }else{
                 costMap[x][y] = INT32_MAX;
             }
@@ -1017,22 +1053,17 @@ void GetUserInput() {
     PlacePlayerCharacter();
 
     while (!quit_game) {
-        //system("clear");
         DisplayMap(currentMap);
-
         int userInputX = -1, userInputY = -1;
-        //This cleanses color output
-        printf("\033[0m");
         //Printout current location
         if(pc->isValidMovement){
             printw("Current Location in world: (%d, %d)", currX - 199, currY - 199);
             printw("\nEnter New Command: ");
-        }else{
+        }else {
             //If previous command was invalid, show it and the command IG
             printw("Current Location: (%d, %d) --- Invalid movement command.", currX - 199, currY - 199);
             printw("\nEnter New Command: ");
         }
-
         refresh();
         //Get input char
         char userInputCharacter = getch();
@@ -1043,9 +1074,13 @@ void GetUserInput() {
            userInputCharacter == 'k' || userInputCharacter == 'u' || userInputCharacter == 'l' || userInputCharacter == 'n' || userInputCharacter == 'j' ||
            userInputCharacter == 'b' || userInputCharacter == 'h' || userInputCharacter == ' ' || userInputCharacter == '.'){
             //Let's move the player
-            printw(&userInputCharacter);
-            refresh();
+            endwin();
             MovePlayerCharacter(userInputCharacter);
+        }else if(userInputCharacter == '>'){
+            //This should attempt to enter a building(You have to be standing on it)
+            if(currentMap->map[pc->mapX][pc->mapY] == 'C' || currentMap->map[pc->mapX][pc->mapY] == 'M'){
+                //enterBuilding(userInputCharacter);
+            }
         }
     }
 }
