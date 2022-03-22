@@ -930,41 +930,63 @@ int IsValidPlayerMovement(int currX, int currY){
 void MovePlayerCharacter(char userInputCharacter) {
     //This is moving the pc for now IG idc dude
     //8 is moving up so lets move the PC up
-    if (userInputCharacter == '8') {
-        GenerateCostMap(0);
-        GenerateCostMap(1);
+    if (userInputCharacter == '8' || userInputCharacter == 'k') {
         //Check if the incremented movement is valid(Which we're going up so its y-1)
         if (IsValidPlayerMovement(pc->mapX, pc->mapY - 1)) {
             //Set updated position of player
             pc->mapY = pc->mapY - 1;
         }
-    } else if (userInputCharacter == '6') {
-        GenerateCostMap(0);
-        GenerateCostMap(1);
+    } else if (userInputCharacter == '6' || userInputCharacter == 'l') {
         //Check if the incremented movement is valid(Which we're going up so its x+1)
         if (IsValidPlayerMovement(pc->mapX + 1, pc->mapY)) {
             //Set updated position of player
             pc->mapX = pc->mapX + 1;
         }
-    } else if (userInputCharacter == '2') {
-        GenerateCostMap(0);
-        GenerateCostMap(1);
+    } else if (userInputCharacter == '2' || userInputCharacter == 'j') {
         //Check if the incremented movement is valid(Which we're going down so its y+1)
         if (IsValidPlayerMovement(pc->mapX, pc->mapY + 1)) {
             //Set updated position of player
             pc->mapY = pc->mapY + 1;
         }
-    } else if (userInputCharacter == '4') {
-        GenerateCostMap(0);
-        GenerateCostMap(1);
+    } else if (userInputCharacter == '4' || userInputCharacter == 'h') {
         //Check if the incremented movement is valid(Which we're going up so its x-1)
         if (IsValidPlayerMovement(pc->mapX - 1, pc->mapY)) {
             //Set updated position of player
             pc->mapX = pc->mapX - 1;
         }
-    }else if(userInputCharacter == '5'){
-        //Stand still
+    } else if(userInputCharacter == '5' || userInputCharacter == ' ' || userInputCharacter == '.'){
+        //Stand still - We don't want to regen a cost map for standing still
+        //Adding diagonal movement next
+    } else if(userInputCharacter == '7' || userInputCharacter == 'y'){
+        //Upper left
+        if (IsValidPlayerMovement(pc->mapX - 1, pc->mapY - 1)) {
+            //Set updated position of player
+            pc->mapX = pc->mapX - 1;
+            pc->mapY = pc->mapY - 1;
+        }
+    } else if(userInputCharacter == '9' || userInputCharacter == 'u'){
+        //Upper right
+        if (IsValidPlayerMovement(pc->mapX + 1, pc->mapY - 1)) {
+            //Set updated position of player
+            pc->mapX = pc->mapX + 1;
+            pc->mapY = pc->mapY - 1;
+        }
+    } else if(userInputCharacter == '1' || userInputCharacter == 'b'){
+        //Bottom left
+        if (IsValidPlayerMovement(pc->mapX - 1, pc->mapY + 1)) {
+            //Set updated position of player
+            pc->mapX = pc->mapX - 1;
+            pc->mapY = pc->mapY + 1;
+        }
+    } else if(userInputCharacter == '3' || userInputCharacter == 'n'){
+        //Bottom right
+        if (IsValidPlayerMovement(pc->mapX + 1, pc->mapY + 1)) {
+            //Set updated position of player
+            pc->mapX = pc->mapX + 1;
+            pc->mapY = pc->mapY + 1;
+        }
     }
+
 
     if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_POKE_CENTER]){
         currentMap->currentTime += COST_BUILDING[PLAYER_COST];
@@ -977,7 +999,11 @@ void MovePlayerCharacter(char userInputCharacter) {
     } else if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_CLEARING]){
         currentMap->currentTime += COST_PATH_OR_CLEARING[PLAYER_COST];
     }
-
+    //If we're not standing still then regen cost map
+    if(userInputCharacter != '5' && userInputCharacter != ' ' && userInputCharacter != '.'){
+        GenerateCostMap(0);
+        GenerateCostMap(1);
+    }
     //After the player moves we move NPC'S
     MoveNPCS();
 }
@@ -1011,94 +1037,15 @@ void GetUserInput() {
         //Get input char
         char userInputCharacter = getch();
 
-        if (userInputCharacter == 'f' || userInputCharacter == 'F') {
+        //Handle all inputs that determine player movement(including standing still)
+        if(userInputCharacter == '8' || userInputCharacter == '6' || userInputCharacter == '2' || userInputCharacter == '4' || userInputCharacter == '5' ||
+           userInputCharacter == '7' || userInputCharacter == '9' || userInputCharacter == '1' || userInputCharacter == '3' || userInputCharacter == 'y' ||
+           userInputCharacter == 'k' || userInputCharacter == 'u' || userInputCharacter == 'l' || userInputCharacter == 'n' || userInputCharacter == 'j' ||
+           userInputCharacter == 'b' || userInputCharacter == 'h' || userInputCharacter == ' ' || userInputCharacter == '.'){
+            //Let's move the player
             printw(&userInputCharacter);
             refresh();
-            scanf(" %d %d", &userInputX, &userInputY);
-            //format for like stupid user input shit
-            userInputX = userInputX + 199;
-            userInputY = userInputY + 199;
-            if (IsBoundsValid(userInputX, 398) == 1 && IsBoundsValid(userInputY, 398) == 1) {
-                if (worldMap[userInputX][userInputY] == NULL) {
-                    GenerateMap(userInputX, userInputY);
-                    currX = userInputX;
-                    currY = userInputY;
-                } else {
-                    currentMap = worldMap[userInputX][userInputY];
-                    currX = userInputX;
-                    currY = userInputY;
-                }
-            }
-            //Generate new cost maps if we change maps
-            GenerateCostMap(0);
-            GenerateCostMap(1);
-        } else if (userInputCharacter == 'q' || userInputCharacter == 'Q') {
-            printf("You don't want to play this poorly made game anymore?='(\n");
-            quit_game = 1;
-            break;
-        } else if (userInputCharacter == 'n' || userInputCharacter == 'N') {
-            //Generate map to the north if applicable
-            if (currY <= 0) {
-                continue;
-            } else if (worldMap[currX][currY - 1] == NULL) {
-                currY--;
-                GenerateMap(currX, currY);
-            } else {
-                currY--;
-                currentMap = worldMap[currX][currY];
-            }
-            //Generate new cost maps if we change maps
-            GenerateCostMap(0);
-            GenerateCostMap(1);
-        } else if (userInputCharacter == 's' || userInputCharacter == 'S') {
-            //Generate map to the south if applicable
-            if (currY >= 398) {
-                continue;
-            } else if (worldMap[currX][currY + 1] == NULL) {
-                currY++;
-                GenerateMap(currX, currY);
-            } else {
-                currY++;
-                currentMap = worldMap[currX][currY];
-            }
-            //Generate new cost maps if we change maps
-            GenerateCostMap(0);
-            GenerateCostMap(1);
-        } else if (userInputCharacter == 'e' || userInputCharacter == 'E') {
-            //Generate map the east if applicable
-            if (currX >= 398) {
-                continue;
-            } else if (worldMap[currX + 1][currY] == NULL) {
-                currX++;
-                GenerateMap(currX, currY);
-            } else {
-                currX++;
-                currentMap = worldMap[currX][currY];
-            }
-            //Generate new cost maps if we change maps
-            GenerateCostMap(0);
-            GenerateCostMap(1);
-        } else if (userInputCharacter == 'w' || userInputCharacter == 'W') {
-            //Generate map to the west if applicable
-            if (currX <= 0) {
-                continue;
-            } else if (worldMap[currX - 1][currY] == NULL) {
-                currX--;
-                GenerateMap(currX, currY);
-            } else {
-                currX--;
-                currentMap = worldMap[currX][currY];
-            }
-            //Generate new cost maps if we change maps
-            GenerateCostMap(0);
-            GenerateCostMap(1);
-        }else if(userInputCharacter == '8' || userInputCharacter == '6' || userInputCharacter == '2' || userInputCharacter == '4' || userInputCharacter == '5'){
-            //Let's move the player
             MovePlayerCharacter(userInputCharacter);
-        }
-        char cleanse = '?';
-        while (cleanse != '\n') {
-            scanf("%c", &cleanse);
         }
     }
 }
