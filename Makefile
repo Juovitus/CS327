@@ -8,7 +8,7 @@ LIBS=-lm
 %.o: %.c
 	$(CC) -g -c -o $@ $< $(CFLAGS)
 
-Poke: main.o heap.c heap.h
+Poke: main.o -lncurses heap.c heap.h
 	$(CC) -g -o $@ $^ $(CFLAGS)
 	rm -f *.o
 

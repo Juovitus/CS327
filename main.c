@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "heap.h"
+#include<ncurses.h>
 
 #define MAP_X_LENGTH 80
 #define MAP_Y_LENGTH 21
@@ -32,6 +33,7 @@ int32_t COST_BUILDING[] = {INT32_MAX, INT32_MAX, 10, INT32_MAX};
 int32_t COST_TALL_GRASS[] = {15, 20, 20, 20};
 //Default number of trainers if not passed in a number
 int numTrainers = 10;
+int quit_game = 0;
 
 typedef struct nonPlayerCharacter{
     int npcType, mapX, mapY, isAlive, nextMoveTime, direction;
@@ -72,6 +74,16 @@ void DisplayMap(mapGrid *map){
         //GenerateCostMap(i);//THIS GENERATES COST MAP FOR RIVAL AND HIKER---
         //PrintCostMap(i);   //---THIS WILL PRINT THE COST MAP OF THE CURRENT MAP FOR HIKERS AND RIVALS---
     }
+    initscr();
+
+    init_pair(SYMBOL_POKE_CENTER, COLOR_WHITE, COLOR_BLACK);
+    init_pair(SYMBOL_POKE_MART, COLOR_WHITE, COLOR_BLACK);
+    init_pair(SYMBOL_CLEARING, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(SYMBOL_TALL_GRASS, COLOR_GREEN, COLOR_BLACK);
+    init_pair(SYMBOL_BOULDER, COLOR_RED, COLOR_BLACK);
+    init_pair(SYMBOL_RIVAL, COLOR_BLUE, COLOR_BLACK);
+    init_pair(SYMBOL_PATH, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(SYMBOL_PLAYER, COLOR_WHITE, COLOR_BLACK);
     for(int y = 0; y < MAP_Y_LENGTH; y++){
         for(int x = 0; x < MAP_X_LENGTH; x++){
             //Lets color code the output so it looks better :)
@@ -91,51 +103,84 @@ void DisplayMap(mapGrid *map){
 
             switch(c) {
                 case 'C' :
-                    printf("\033[0;35m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_POKE_CENTER));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_POKE_CENTER));
                     break;
                 case 'M' :
-                    printf("\033[0;34m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_POKE_MART));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_POKE_MART));
                     break;
                 case '.' :
-                    printf("\033[0;30m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_CLEARING));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_CLEARING));
                     break;
                 case ';' :
-                    printf("\033[0;32m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_TALL_GRASS));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_TALL_GRASS));
                     break;
                 case '%' :
-                    printf("\033[0;31m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_BOULDER));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_BOULDER));
                     break;
                 case '#' :
-                    printf("\033[0;36m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_PATH));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_PATH));
                     break;
                 case '@' :
-                    printf("\033[1;35m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_PLAYER));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_PLAYER));
                     break;
                 case 'h' :
-                    printf("\033[1;33m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_RIVAL));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 'r' :
-                    printf("\033[1;33m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_RIVAL));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 'p' :
-                    printf("\033[1;33m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_RIVAL));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 'w' :
-                    printf("\033[1;33m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_RIVAL));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 's' :
-                    printf("\033[1;33m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_RIVAL));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 'n' :
-                    printf("\033[1;33m%c", c);
+                    attron(COLOR_PAIR(SYMBOL_RIVAL));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 default:
-                    printf("\033[0;30m%c", map->map[x][y]);
+                    attron(COLOR_PAIR(SYMBOL_TALL_GRASS));
+                    mvaddch(y,x,c);
+                    attroff(COLOR_PAIR(SYMBOL_TALL_GRASS));
             }
         }
-        //Break to a new line
-        printf("\n");
+        if(y!=MAP_Y_LENGTH-1){
+            //Break to a new line
+            printw("\n");
+        }
+
+
     }
+    refresh();
 }
 
 int IsBoundsValid(int x, int xMax){
@@ -944,27 +989,31 @@ void GetUserInput() {
 
     GenerateMap(currX, currY);
     PlacePlayerCharacter();
-    while (1) {
-        system("clear");
+
+    while (!quit_game) {
+        //system("clear");
         DisplayMap(currentMap);
-        char userInputCharacter = ' ';
+
         int userInputX = -1, userInputY = -1;
         //This cleanses color output
         printf("\033[0m");
         //Printout current location
         if(pc->isValidMovement){
-            printf("Current Location in world: (%d, %d)", currX - 199, currY - 199);
-            printf("\nEnter New Command: ");
+            printw("Current Location in world: (%d, %d)", currX - 199, currY - 199);
+            printw("\nEnter New Command: ");
         }else{
             //If previous command was invalid, show it and the command IG
-            printf("Current Location: (%d, %d) --- Invalid movement command.", currX - 199, currY - 199);
-            printf("\nEnter New Command: ");
+            printw("Current Location: (%d, %d) --- Invalid movement command.", currX - 199, currY - 199);
+            printw("\nEnter New Command: ");
         }
 
-        //Get Input
-        scanf(" %c", &userInputCharacter);
-        //printf("\n");
+        refresh();
+        //Get input char
+        char userInputCharacter = getch();
+
         if (userInputCharacter == 'f' || userInputCharacter == 'F') {
+            printw(&userInputCharacter);
+            refresh();
             scanf(" %d %d", &userInputX, &userInputY);
             //format for like stupid user input shit
             userInputX = userInputX + 199;
@@ -985,6 +1034,7 @@ void GetUserInput() {
             GenerateCostMap(1);
         } else if (userInputCharacter == 'q' || userInputCharacter == 'Q') {
             printf("You don't want to play this poorly made game anymore?='(\n");
+            quit_game = 1;
             break;
         } else if (userInputCharacter == 'n' || userInputCharacter == 'N') {
             //Generate map to the north if applicable
@@ -1069,7 +1119,7 @@ int main(int argc, char *argv[]) {
         printf("Can't overfill the map!:)\n");
         return 0;
     }
-
+    initscr();
     pc = malloc(sizeof(playerCharacter));
     //Start with generating random
     srand(time(NULL));
