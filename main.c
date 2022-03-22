@@ -241,8 +241,7 @@ void MoveHiker(nonPlayerCharacter* npc){
                 //Start battle if moving onto player
                 if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY){
                     StartBattle();
-                } else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == INT32_MAX ||
-                   IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
+                } else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
                     continue;
                 }else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] <= minCost){
                     if(rand() < RAND_MAX / 2 && currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == minCost){
@@ -287,8 +286,7 @@ void MoveRival (nonPlayerCharacter* npc){
                 //Start battle if moving onto player
                 if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY){
                     StartBattle();
-                } else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == INT32_MAX ||
-                   IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
+                } else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
                     continue;
                 }else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] <= minCost){
                     if(rand() < RAND_MAX / 2 && currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == minCost){
@@ -954,7 +952,7 @@ int IsValidPlayerMovement(int currX, int currY){
     }else{
         for(int i = 0; i < (MAP_X_LENGTH * MAP_Y_LENGTH) - 1; i++){
             if(currentMap->npc[i].mapX == currX && currentMap->npc[i].mapY == currY){
-                pc->isValidMovement = 0;
+                StartBattle();
                 return 0;
             }
         }
@@ -966,29 +964,34 @@ int IsValidPlayerMovement(int currX, int currY){
 void MovePlayerCharacter(char userInputCharacter) {
     //This is moving the pc for now IG idc dude
     //8 is moving up so lets move the PC up
+    int isValidMovement = 0;
     if (userInputCharacter == '8' || userInputCharacter == 'k') {
         //Check if the incremented movement is valid(Which we're going up so its y-1)
         if (IsValidPlayerMovement(pc->mapX, pc->mapY - 1)) {
             //Set updated position of player
             pc->mapY = pc->mapY - 1;
+            isValidMovement = 1;
         }
     } else if (userInputCharacter == '6' || userInputCharacter == 'l') {
         //Check if the incremented movement is valid(Which we're going up so its x+1)
         if (IsValidPlayerMovement(pc->mapX + 1, pc->mapY)) {
             //Set updated position of player
             pc->mapX = pc->mapX + 1;
+            isValidMovement = 1;
         }
     } else if (userInputCharacter == '2' || userInputCharacter == 'j') {
         //Check if the incremented movement is valid(Which we're going down so its y+1)
         if (IsValidPlayerMovement(pc->mapX, pc->mapY + 1)) {
             //Set updated position of player
             pc->mapY = pc->mapY + 1;
+            isValidMovement = 1;
         }
     } else if (userInputCharacter == '4' || userInputCharacter == 'h') {
         //Check if the incremented movement is valid(Which we're going up so its x-1)
         if (IsValidPlayerMovement(pc->mapX - 1, pc->mapY)) {
             //Set updated position of player
             pc->mapX = pc->mapX - 1;
+            isValidMovement = 1;
         }
     } else if(userInputCharacter == '5' || userInputCharacter == ' ' || userInputCharacter == '.'){
         //Stand still - We don't want to regen a cost map for standing still
@@ -999,6 +1002,7 @@ void MovePlayerCharacter(char userInputCharacter) {
             //Set updated position of player
             pc->mapX = pc->mapX - 1;
             pc->mapY = pc->mapY - 1;
+            isValidMovement = 1;
         }
     } else if(userInputCharacter == '9' || userInputCharacter == 'u'){
         //Upper right
@@ -1006,6 +1010,7 @@ void MovePlayerCharacter(char userInputCharacter) {
             //Set updated position of player
             pc->mapX = pc->mapX + 1;
             pc->mapY = pc->mapY - 1;
+            isValidMovement = 1;
         }
     } else if(userInputCharacter == '1' || userInputCharacter == 'b'){
         //Bottom left
@@ -1013,6 +1018,7 @@ void MovePlayerCharacter(char userInputCharacter) {
             //Set updated position of player
             pc->mapX = pc->mapX - 1;
             pc->mapY = pc->mapY + 1;
+            isValidMovement = 1;
         }
     } else if(userInputCharacter == '3' || userInputCharacter == 'n'){
         //Bottom right
@@ -1020,6 +1026,7 @@ void MovePlayerCharacter(char userInputCharacter) {
             //Set updated position of player
             pc->mapX = pc->mapX + 1;
             pc->mapY = pc->mapY + 1;
+            isValidMovement = 1;
         }
     }
 
@@ -1036,7 +1043,7 @@ void MovePlayerCharacter(char userInputCharacter) {
         currentMap->currentTime += COST_PATH_OR_CLEARING[PLAYER_COST];
     }
     //If we're not standing still then regen cost map
-    if(userInputCharacter != '5' && userInputCharacter != ' ' && userInputCharacter != '.'){
+    if(userInputCharacter != '5' && userInputCharacter != ' ' && userInputCharacter != '.' && isValidMovement){
         GenerateCostMap(0);
         GenerateCostMap(1);
     }
@@ -1074,7 +1081,6 @@ void GetUserInput() {
            userInputCharacter == 'k' || userInputCharacter == 'u' || userInputCharacter == 'l' || userInputCharacter == 'n' || userInputCharacter == 'j' ||
            userInputCharacter == 'b' || userInputCharacter == 'h' || userInputCharacter == ' ' || userInputCharacter == '.'){
             //Let's move the player
-            endwin();
             MovePlayerCharacter(userInputCharacter);
         }else if(userInputCharacter == '>'){
             //This should attempt to enter a building(You have to be standing on it)
