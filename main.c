@@ -239,7 +239,8 @@ void MoveHiker(nonPlayerCharacter* npc){
                 continue;
             }else{
                 //Start battle if moving onto player
-                if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY){
+                if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY &&
+                   currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]){
                     StartBattle();
                 } else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
                     continue;
@@ -284,7 +285,8 @@ void MoveRival (nonPlayerCharacter* npc){
                 continue;
             }else{
                 //Start battle if moving onto player
-                if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY){
+                if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY  &&
+                   currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]){
                     StartBattle();
                 } else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
                     continue;
@@ -357,8 +359,9 @@ void MovePacer (nonPlayerCharacter* npc){
     }
 
     //Start battle if moving onto player
-    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY) {
-        StartBattle(npc->npcType);
+    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY &&
+       currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]) {
+        StartBattle();
     } else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = (npc->direction + 2) % 4;
     } else{
@@ -405,7 +408,8 @@ void MoveWanderer (nonPlayerCharacter* npc){
     }
 
     //Start battle if moving onto player
-    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY){
+    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY &&
+       currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]){
         StartBattle();
     }else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = rand() % 4; //Set random direction 1-4
@@ -453,7 +457,8 @@ void MoveRandomWalker(nonPlayerCharacter* npc){
     }
 
     //Start battle if moving onto player
-    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY){
+    if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY &&
+       currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]){
         StartBattle();
     } else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = rand() % 4; //Set random direction 1-4

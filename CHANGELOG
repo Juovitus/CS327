@@ -38,3 +38,17 @@
     Implemented Wanderer Movement
     Added Player standing still movement command
     Implemented remaining NPC movement & more.
+3/20/2022
+    Started implementing Ncurses
+    Got map to output using Ncurses
+    Color coding works
+3/21/2022
+    IDK why but color isn't working anymore
+    Added player movement using ncurses
+    Ripped out a bunch of no-longer needed code
+    Added ability for NPC's to start battle with player when attempting to path onto their tile
+    Added ability for PC's to start battle with NPC's when attempting to path onto their tile
+3/22/2022
+    BUG FOUND: When player is inside a building, NPC's will still start a battle with them if adjacent.
+3/23/2022
+    Fixed bug where NPC's would start battle with player when in buildings.
