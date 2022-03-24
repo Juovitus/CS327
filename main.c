@@ -236,6 +236,8 @@ void StartBattle(){
             leaveBattle = 1;
         }
     }
+    //Clear screen before going back
+    clear();
 }
 
 void EnterPokeCenter(){
@@ -259,6 +261,8 @@ void EnterPokeCenter(){
             leaveBuilding = 1;
         }
     }
+    //Clear screen before going back
+    clear();
 }
 
 void EnterPokeMart(){
@@ -282,6 +286,58 @@ void EnterPokeMart(){
             leaveBuilding = 1;
         }
     }
+    //Clear screen before going back
+    clear();
+}
+
+void PrintTrainers(int screenNum, int totalScreens){
+    printw("------------------TRAINERS PAGE %d/%d------------------\n", screenNum, totalScreens);
+    printw("Hiker = %d, Rival = %d, Pacer = %d, Wanderer = %d,\n"
+           "Stationary = %d, Random Walker = %d", SYMBOL_HIKER, SYMBOL_RIVAL, SYMBOL_PACER, SYMBOL_WANDERER, SYMBOL_STATIONARY, SYMBOL_RANDOM_WALKER);
+    printw("\n-----------------------------------------------------\n");
+    int startPos = (screenNum * 19) - 19;
+    for(int i = startPos; i < startPos + 19; i++) {
+        if(i > numTrainers){
+            break;
+        }
+        printw("Type: %d, Locx: %d, Locy: %d\n", currentMap->npc[i].npcType, currentMap->npc[i].mapX, currentMap->npc[i].mapY);
+    }
+    printw("Up, Down and ESC to navigate.");
+}
+
+void DisplayTrainers(){
+    int leaveTrainerScreen = 0;
+    int screenNum = 1;
+    int totalScreens = (numTrainers / 20) + 1; //Min one screen
+    char location[] = "Trainer is";
+    while(!leaveTrainerScreen){
+        //CLEAR SCREEN BEFORE STUFF
+        clear();
+        PrintTrainers(screenNum, totalScreens);
+        refresh();
+        int userInput = getch();
+        if(userInput == ESCAPE_KEY) {
+            leaveTrainerScreen = 1;
+        }else if(userInput == KEY_DOWN){
+            //I DONT KNOW WHY THESE KEYS ARE WORKING WTF
+            if(screenNum > totalScreens){
+                printw("\nWTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF?");
+                refresh();
+                getch();
+            }else{
+                PrintTrainers(screenNum, totalScreens);
+            }
+        }else if(userInput == KEY_UP){
+            if(screenNum > totalScreens){
+                PrintTrainers(screenNum - 1, totalScreens);
+                screenNum = screenNum - 1;
+            }else{
+                PrintTrainers(screenNum, totalScreens);
+            }
+        }
+    }
+    //Clear screen before going back
+    clear();
 }
 
 void MoveHiker(nonPlayerCharacter* npc){
@@ -1036,12 +1092,13 @@ void MovePlayerCharacter(char userInputCharacter) {
             //If we want to move to the map to the north then do so?
             if(worldMap[currentMap->worldLocationX][currentMap->worldLocationY - 1] == NULL){
                 GenerateMap(currentMap->worldLocationX, currentMap->worldLocationY - 1);
+                currentMap->southOpening = pc->mapX;
                 pc->mapY = MAP_Y_LENGTH - 2;
                 pc->isValidMovement = 1; //Jank
                 isValidMovement = 1;
             }else{
                 currentMap = worldMap[currentMap->worldLocationX][currentMap->worldLocationY - 1];
-                pc->mapY = MAP_Y_LENGTH - 1;
+                pc->mapY = MAP_Y_LENGTH - 2;
                 pc->isValidMovement = 1; //Jank
                 isValidMovement = 1;
             }
@@ -1137,7 +1194,7 @@ void GetUserInput() {
         DisplayMap(currentMap);
         //Printout current location
         if(pc->isValidMovement){
-            printw("Current Location in world: (%d, %d)", currentMap->worldLocationX - 199, currentMap->worldLocationY - 199);
+            printw("Current Location in world: (%d, %d) Xn:%d, Xs:%d", currentMap->worldLocationX - 199, currentMap->worldLocationY - 199, currentMap->northOpening, currentMap->southOpening);
             printw("\nEnter New Command: ");
         }else {
             //If previous command was invalid, show it and the command IG
@@ -1165,7 +1222,7 @@ void GetUserInput() {
         }else if(userInputCharacter == 'q'){
             quit_game = 1;
         }else if(userInputCharacter == 't'){
-            //display list of trainers
+            DisplayTrainers();
         }
     }
     endwin();
