@@ -35,6 +35,7 @@ int32_t COST_TALL_GRASS[] = {15, 20, 20, 20};
 //Default number of trainers if not passed in a number
 int numTrainers = 10;
 int quit_game = 0;
+char debugMessage[] = {'D', 'E', 'B', 'U', 'G', ' ', 'L', 'I', 'N', 'E'};
 
 typedef struct nonPlayerCharacter{
     int npcType, mapX, mapY, isAlive, nextMoveTime, direction;
@@ -44,6 +45,7 @@ typedef struct nonPlayerCharacter{
 typedef struct mapGrid{
     char map[MAP_X_LENGTH][MAP_Y_LENGTH];
     int northOpening, eastOpening, southOpening, westOpening;
+    int worldLocationX, worldLocationY;
     uint32_t hikerMap[MAP_X_LENGTH][MAP_Y_LENGTH];
     uint32_t rivalMap[MAP_X_LENGTH][MAP_Y_LENGTH];
     nonPlayerCharacter npc[MAP_X_LENGTH * MAP_Y_LENGTH];
@@ -75,7 +77,11 @@ void DisplayMap(mapGrid *map){
         //GenerateCostMap(i);//THIS GENERATES COST MAP FOR RIVAL AND HIKER---
         //PrintCostMap(i);   //---THIS WILL PRINT THE COST MAP OF THE CURRENT MAP FOR HIKERS AND RIVALS---
     }
-    initscr();
+
+    for(int i = 0; i < sizeof(debugMessage); i++){
+        mvaddch(0,i,debugMessage[i]);
+    }
+    printw("\n");//add +1 to y so it doesnt overwrite debug
     init_pair(SYMBOL_POKE_CENTER, COLOR_WHITE, COLOR_BLACK);
     init_pair(SYMBOL_POKE_MART, COLOR_WHITE, COLOR_BLACK);
     init_pair(SYMBOL_CLEARING, COLOR_YELLOW, COLOR_BLACK);
@@ -104,72 +110,72 @@ void DisplayMap(mapGrid *map){
             switch(c) {
                 case 'C' :
                     attron(COLOR_PAIR(SYMBOL_POKE_CENTER));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_POKE_CENTER));
                     break;
                 case 'M' :
                     attron(COLOR_PAIR(SYMBOL_POKE_MART));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_POKE_MART));
                     break;
                 case '.' :
                     attron(COLOR_PAIR(SYMBOL_CLEARING));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_CLEARING));
                     break;
                 case ';' :
                     attron(COLOR_PAIR(SYMBOL_TALL_GRASS));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_TALL_GRASS));
                     break;
                 case '%' :
                     attron(COLOR_PAIR(SYMBOL_BOULDER));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_BOULDER));
                     break;
                 case '#' :
                     attron(COLOR_PAIR(SYMBOL_PATH));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_PATH));
                     break;
                 case '@' :
                     attron(COLOR_PAIR(SYMBOL_PLAYER));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_PLAYER));
                     break;
                 case 'h' :
                     attron(COLOR_PAIR(SYMBOL_RIVAL));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 'r' :
                     attron(COLOR_PAIR(SYMBOL_RIVAL));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 'p' :
                     attron(COLOR_PAIR(SYMBOL_RIVAL));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 'w' :
                     attron(COLOR_PAIR(SYMBOL_RIVAL));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 's' :
                     attron(COLOR_PAIR(SYMBOL_RIVAL));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 case 'n' :
                     attron(COLOR_PAIR(SYMBOL_RIVAL));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_RIVAL));
                     break;
                 default:
                     attron(COLOR_PAIR(SYMBOL_TALL_GRASS));
-                    mvaddch(y,x,c);
+                    mvaddch(y+1,x,c);
                     attroff(COLOR_PAIR(SYMBOL_TALL_GRASS));
             }
         }
@@ -221,11 +227,59 @@ void StartBattle(){
         printw(" ___/ `   ' ,\"\"+ \\ \n");
         printw("(__...'   __\\    |`.___.';\n");
         printw("  (_,...'(_,.`__)/'.....+\n");
-        printw("You can use your escape key to exit,\notherwise you're stuck here cuddling with this cat.\nI know it sucks.");
+        printw("You can use your escape key to exit,\n"
+               "otherwise you're stuck here cuddling with this cat.\n"
+               "I know it sucks.");
         refresh();
         char userInput = getch();
         if(userInput == ESCAPE_KEY){
             leaveBattle = 1;
+        }
+    }
+}
+
+void EnterPokeCenter(){
+    int leaveBuilding = 0;
+    while(!leaveBuilding){
+        //CLEAR SCREEN BEFORE STUFF
+        clear();
+        printw("Temporary PokeCenter page\n");
+        printw("   |\\---/|\n");
+        printw("   | ,_, |\n");
+        printw("    \\_`_/-..----.\n");
+        printw(" ___/ `   ' ,\"\"+ \\ \n");
+        printw("(__...'   __\\    |`.___.';\n");
+        printw("  (_,...'(_,.`__)/'.....+\n");
+        printw("You can use your < key to exit,\n"
+               "otherwise you're stuck here.\n"
+               "I know it sucks.");
+        refresh();
+        char userInput = getch();
+        if(userInput == '<'){
+            leaveBuilding = 1;
+        }
+    }
+}
+
+void EnterPokeMart(){
+    int leaveBuilding = 0;
+    while(!leaveBuilding){
+        //CLEAR SCREEN BEFORE STUFF
+        clear();
+        printw("Temporary PokeMart page\n");
+        printw("   |\\---/|\n");
+        printw("   | ,_, |\n");
+        printw("    \\_`_/-..----.\n");
+        printw(" ___/ `   ' ,\"\"+ \\ \n");
+        printw("(__...'   __\\    |`.___.';\n");
+        printw("  (_,...'(_,.`__)/'.....+\n");
+        printw("You can use your < key to exit,\n"
+               "otherwise you're stuck here.\n"
+               "I know it sucks.");
+        refresh();
+        char userInput = getch();
+        if(userInput == '<'){
+            leaveBuilding = 1;
         }
     }
 }
@@ -747,11 +801,11 @@ void GenerateMap(int newMapX, int newMapY) {
     //If out of bounds say error
     if(newMapX > 398 || newMapY > 398 || newMapX < 0 || newMapY < 0){
         DisplayMap(currentMap);
-        printf("\nGenerating map in invalid spot.\n");
+        strcpy(debugMessage, "InvMapLoc");
         return;
     }
-    currentMap = malloc(sizeof(mapGrid));
 
+    currentMap = malloc(sizeof(mapGrid));
     //Generate random openings for map on N/E/S/W sides
     int randomNorthOpening = GenerateRandomX(2);
     int randomEastOpening = GenerateRandomY(2);
@@ -937,6 +991,8 @@ void GenerateMap(int newMapX, int newMapY) {
     currentMap->eastOpening = randomEastOpening;
     currentMap->southOpening = randomSouthOpening;
     currentMap->westOpening = randomWestOpening;
+    currentMap->worldLocationX = newMapX;
+    currentMap->worldLocationY = newMapY;
     worldMap[newMapX][newMapY] = currentMap;
 
     //Place NPS on map
@@ -976,6 +1032,19 @@ void MovePlayerCharacter(char userInputCharacter) {
             //Set updated position of player
             pc->mapY = pc->mapY - 1;
             isValidMovement = 1;
+        }else if(currentMap->map[pc->mapX][pc->mapY - 1] == SYMBOLS[SYMBOL_PATH] && pc->mapY - 1 == 0){
+            //If we want to move to the map to the north then do so?
+            if(worldMap[currentMap->worldLocationX][currentMap->worldLocationY - 1] == NULL){
+                GenerateMap(currentMap->worldLocationX, currentMap->worldLocationY - 1);
+                pc->mapY = MAP_Y_LENGTH - 2;
+                pc->isValidMovement = 1; //Jank
+                isValidMovement = 1;
+            }else{
+                currentMap = worldMap[currentMap->worldLocationX][currentMap->worldLocationY - 1];
+                pc->mapY = MAP_Y_LENGTH - 1;
+                pc->isValidMovement = 1; //Jank
+                isValidMovement = 1;
+            }
         }
     } else if (userInputCharacter == '6' || userInputCharacter == 'l') {
         //Check if the incremented movement is valid(Which we're going up so its x+1)
@@ -1049,8 +1118,8 @@ void MovePlayerCharacter(char userInputCharacter) {
     }
     //If we're not standing still then regen cost map
     if(userInputCharacter != '5' && userInputCharacter != ' ' && userInputCharacter != '.' && isValidMovement){
-        GenerateCostMap(0);
-        GenerateCostMap(1);
+//        GenerateCostMap(0);
+//        GenerateCostMap(1);
     }
     //After the player moves we move NPC'S
     MoveNPCS();
@@ -1066,14 +1135,13 @@ void GetUserInput() {
 
     while (!quit_game) {
         DisplayMap(currentMap);
-        int userInputX = -1, userInputY = -1;
         //Printout current location
         if(pc->isValidMovement){
-            printw("Current Location in world: (%d, %d)", currX - 199, currY - 199);
+            printw("Current Location in world: (%d, %d)", currentMap->worldLocationX - 199, currentMap->worldLocationY - 199);
             printw("\nEnter New Command: ");
         }else {
             //If previous command was invalid, show it and the command IG
-            printw("Current Location: (%d, %d) --- Invalid movement command.", currX - 199, currY - 199);
+            printw("Current Location: (%d, %d) --- Invalid movement command.", currentMap->worldLocationX - 199, currentMap->worldLocationY - 199);
             printw("\nEnter New Command: ");
         }
         refresh();
@@ -1089,11 +1157,18 @@ void GetUserInput() {
             MovePlayerCharacter(userInputCharacter);
         }else if(userInputCharacter == '>'){
             //This should attempt to enter a building(You have to be standing on it)
-            if(currentMap->map[pc->mapX][pc->mapY] == 'C' || currentMap->map[pc->mapX][pc->mapY] == 'M'){
-                //enterBuilding(userInputCharacter);
+            if(currentMap->map[pc->mapX][pc->mapY] == 'C'){
+                EnterPokeCenter();
+            }else if(currentMap->map[pc->mapX][pc->mapY] == 'M'){
+                EnterPokeMart();
             }
+        }else if(userInputCharacter == 'q'){
+            quit_game = 1;
+        }else if(userInputCharacter == 't'){
+            //display list of trainers
         }
     }
+    endwin();
 }
 
 int main(int argc, char *argv[]) {
@@ -1113,6 +1188,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     initscr();
+    start_color();
     pc = malloc(sizeof(playerCharacter));
     //Start with generating random
     srand(time(NULL));

@@ -52,3 +52,6 @@
     BUG FOUND: When player is inside a building, NPC's will still start a battle with them if adjacent.
 3/23/2022
     Fixed bug where NPC's would start battle with player when in buildings.
+    Adding cross-map movement
+    Bug found where map exits aren't lining up but they totally should be
+    Added going into buildings and their screens
