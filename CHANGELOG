@@ -1,62 +1,76 @@
 2/7/2022
-	Bug found where path can sometimes generate in very bottom right of map
-	Fixed bug by changing how the random placements were generated.
-	Adding multiple maps
+------------
+    Bug found where path can sometimes generate in very bottom right of map
+    Fixed bug by changing how the random placements were generated.
+    Adding multiple maps
 2/8/2022
-	Started lining up roads on adjacent maps
-	Adding 2d array of maps aka world map
-	Generating maps only when needed
-	Started getting user input
+------------
+    Started lining up roads on adjacent maps
+    Adding 2d array of maps aka world map
+    Generating maps only when needed
+    Started getting user input
 2/9/2022
-	Turns out getting user input is REALLY annoying, tons of bugs
-	Fixed bugs with purging user input(dumb asf)
-	Creating manhattan distance for generation of pokestops
-	I think I'm done?
-	Bug->Only shows incorrect movement half the time...wtf
+------------
+    Turns out getting user input is REALLY annoying, tons of bugs
+    Fixed bugs with purging user input(dumb asf)
+    Creating manhattan distance for generation of pokestops
+    I think I'm done?
+    Bug->Only shows incorrect movement half the time...wtf
 2/20/2022
+------------
     Started project, no idea what im doing, professors code is confusing
 2/21/2022
+------------
     Bashed head against wall for many hours trying to figure out what im doing
 2/22/2022
+------------
     Implemented the start of dijkstra's up to neighbor checking
 2/23/2022
+------------
     Added neighbor checking
     Found bug in creation of costMap, where I was using it map[y][x] but initialized it as map[x][y].
     Adapted Distance map to be Rival and Hiker
     Changed various things around project for increased readability -> Mainly symbols and adding some constants.
 3/6/2022
+------------
     Added player movement
     Added number of trainers as an intake
-    Added trainers onto the map
-    Found bug where players could move onto all trainers except first hiker - fixed this bug
+    Added trainers onto the mapFound bug where players could move onto all trainers except first hiker - fixed this bug
 3/7/2022
+------------
     Changed cost maps to make trainer locations infinite cost.
     Implemented Hiker Movement
     Implemented Rival Movement
     Implement Pacer Movement
 3/8/2022
+------------
     Implemented Wanderer Movement
     Added Player standing still movement command
     Implemented remaining NPC movement & more.
 3/20/2022
+------------
     Started implementing Ncurses
     Got map to output using Ncurses
     Color coding works
 3/21/2022
+------------
     IDK why but color isn't working anymore
     Added player movement using ncurses
     Ripped out a bunch of no-longer needed code
     Added ability for NPC's to start battle with player when attempting to path onto their tile
     Added ability for PC's to start battle with NPC's when attempting to path onto their tile
 3/22/2022
+------------
     BUG FOUND: When player is inside a building, NPC's will still start a battle with them if adjacent.
 3/23/2022
+------------
     Fixed bug where NPC's would start battle with player when in buildings.
     Adding cross-map movement
     Bug found where map exits aren't lining up but they totally should be
     Added going into buildings and their screens
     Bug found where arrows keys are detected at ESC
 3/24/2022
+------------
     Fixed arrow keys bug
     Fixed maps not lining up, outdated code caused it.
     Added trainers becoming dead when exiting battle with them
