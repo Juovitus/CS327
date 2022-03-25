@@ -55,3 +55,11 @@
     Adding cross-map movement
     Bug found where map exits aren't lining up but they totally should be
     Added going into buildings and their screens
+    Bug found where arrows keys are detected at ESC
+3/24/2022
+    Fixed arrow keys bug
+    Fixed maps not lining up, outdated code caused it.
+    Added trainers becoming dead when exiting battle with them
+    Added various screens(marts/centers/battle/trainer/etc.)
+    Added the rest of cross-map movement.
+    Added all the things. I lost track.

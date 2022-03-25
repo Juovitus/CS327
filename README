@@ -76,17 +76,39 @@ int IsNpcAtXY(int x, int y)
     Loops through all NPC's on the map and check's if they're at given location
 
 static int NPC_COMPARE(const void *key, const void *with)
-    Compares movetimes of two NPC's
+    Compares move times of two NPCs
+
+void MoveMap(int x, int y, char c)
+    Helper method to move map to passed in variables.
+
+DisplayTrainers()
+    Calls a function to display 18 trainers incrementally and handles user input for the page
+
+PrintTrainers(int screenNum, int totalScreens)
+    Prints a 19 length list of trainers starting from something derived from screenNum.
+
+EnterPokeMart()
+    It enters a PokeMart
+
+EnterPokeCenter()
+    It Enters a PokeCenter
+
+StartBattle(nonPlayerCharacter* npc)
+    Starts a battle with a specific npc, won't do anything if npc is dead
 
 Controls:
-    n | Move to North map
-    e | Move to East map
-    s | Move to South map
-    w | Move to West map
-    f | Fly to map, ex: f 150 150
-    8 | Moves PC North
-    6 | Moves PC East
-    2 | Moves PC South
-    4 | Moves PC West
-    5 | Player stands still
-    q | Quits the game
+    8 | k: Attempt to move player one cell up
+    6 | l: Attempt to move player one cell to the right
+    2 | j: Attempt to move player one cell down
+    4 | h: Attempt to move player one cell to the left
+    7 | y: Attempt to move player one cell to the upper left
+    9 | u: Attempt to move player one cell to the upper right
+    3 | n: Attempt to move player one cell to the lower right
+    1 | b: Attempt to move player one cell to the lower left
+    5 | Space | .: Rest for a turn.
+    >: Attempt to enter a building while standing on one.
+    t: Attempt to display trainer list
+    ↑: Attempt to display previous list
+    ↓: Attempt to display next list
+    Escape: Exit trainer battle or trainer list
+    q: Quit the game when on main screen

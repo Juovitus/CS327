@@ -214,27 +214,32 @@ int IsNpcAtXY(int x, int y){
     return 0;
 }
 
-void StartBattle(){
+void StartBattle(nonPlayerCharacter* npc){
     int leaveBattle = 0;
-    while(!leaveBattle){
-        //CLEAR SCREEN BEFORE BATTLE
-        clear();
-        printw("Temporary battle page\n");
-        printw("A wild Persian Appears!\n");
-        printw("   |\\---/|\n");
-        printw("   | ,_, |\n");
-        printw("    \\_`_/-..----.\n");
-        printw(" ___/ `   ' ,\"\"+ \\ \n");
-        printw("(__...'   __\\    |`.___.';\n");
-        printw("  (_,...'(_,.`__)/'.....+\n");
-        printw("You can use your escape key to exit,\n"
-               "otherwise you're stuck here cuddling with this cat.\n"
-               "I know it sucks.");
-        refresh();
-        char userInput = getch();
-        if(userInput == ESCAPE_KEY){
-            leaveBattle = 1;
+    if(npc->isAlive){
+        while(!leaveBattle){
+            //CLEAR SCREEN BEFORE BATTLE
+            clear();
+            printw("Temporary battle page\n");
+            printw("A wild Persian Appears!\n");
+            printw("   |\\---/|\n");
+            printw("   | ,_, |\n");
+            printw("    \\_`_/-..----.\n");
+            printw(" ___/ `   ' ,\"\"+ \\ \n");
+            printw("(__...'   __\\    |`.___.';\n");
+            printw("  (_,...'(_,.`__)/'.....+\n");
+            printw("You can use your escape key to exit,\n"
+                   "otherwise you're stuck here cuddling with this cat.\n"
+                   "I know it sucks.");
+            refresh();
+            char userInput = getch();
+            if(userInput == ESCAPE_KEY){
+                leaveBattle = 1;
+                npc->isAlive = 0;
+            }
         }
+    }else{
+        pc->isValidMovement = 0;
     }
     //Clear screen before going back
     clear();
@@ -245,14 +250,20 @@ void EnterPokeCenter(){
     while(!leaveBuilding){
         //CLEAR SCREEN BEFORE STUFF
         clear();
-        printw("Temporary PokeCenter page\n");
-        printw("   |\\---/|\n");
-        printw("   | ,_, |\n");
-        printw("    \\_`_/-..----.\n");
-        printw(" ___/ `   ' ,\"\"+ \\ \n");
-        printw("(__...'   __\\    |`.___.';\n");
-        printw("  (_,...'(_,.`__)/'.....+\n");
-        printw("You can use your < key to exit,\n"
+        printw("Temporary PokeCenter page\n"
+               "Something appears!\n");
+        printw("                        ____\n"
+               "                   .---'-    \\\n"
+               "      .-----------/           \\\n"
+               "     /           (         ^  |   __\n"
+               "&   (             \\        O  /  / .'\n"
+               "'._/(              '-'  (.   (_.' /\n"
+               "     \\                    \\     ./\n"
+               "      |    |       |    |/ '._.'\n"
+               "       )   @).____\\|  @ |\n"
+               "   .  /    /       (    | \n"
+               "  \\|, '_:::\\  . ..  '_:::\\ ..\\).");
+        printw("\nYou can use your < key to exit,\n"
                "otherwise you're stuck here.\n"
                "I know it sucks.");
         refresh();
@@ -297,12 +308,13 @@ void PrintTrainers(int screenNum, int totalScreens){
     printw("\n-----------------------------------------------------\n");
     int startPos = (screenNum * 19) - 19;
     for(int i = startPos; i < startPos + 19; i++) {
-        if(i > numTrainers){
+        if(i > numTrainers - 1){
             break;
         }
-        printw("Type: %d, Locx: %d, Locy: %d\n", currentMap->npc[i].npcType, currentMap->npc[i].mapX, currentMap->npc[i].mapY);
+        printw("NpcNUM: %d, Type: %d, Steps North: %d, Steps East: %d\n", i, currentMap->npc[i].npcType, pc->mapY - currentMap->npc[i].mapY, currentMap->npc[i].mapX - pc->mapX);
     }
     printw("Up, Down and ESC to navigate.");
+    refresh();
 }
 
 void DisplayTrainers(){
@@ -319,19 +331,17 @@ void DisplayTrainers(){
         if(userInput == ESCAPE_KEY) {
             leaveTrainerScreen = 1;
         }else if(userInput == KEY_DOWN){
-            //I DONT KNOW WHY THESE KEYS ARE WORKING WTF
-            if(screenNum > totalScreens){
-                printw("\nWTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF?");
-                refresh();
-                getch();
+            if(screenNum >= totalScreens){
+                PrintTrainers(screenNum, totalScreens);
             }else{
+                screenNum++;
                 PrintTrainers(screenNum, totalScreens);
             }
         }else if(userInput == KEY_UP){
-            if(screenNum > totalScreens){
-                PrintTrainers(screenNum - 1, totalScreens);
-                screenNum = screenNum - 1;
+            if(screenNum <= 1){
+                PrintTrainers(screenNum, totalScreens);
             }else{
+                screenNum--;
                 PrintTrainers(screenNum, totalScreens);
             }
         }
@@ -351,7 +361,7 @@ void MoveHiker(nonPlayerCharacter* npc){
                 //Start battle if moving onto player
                 if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY &&
                    currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]){
-                    StartBattle();
+                    StartBattle(npc);
                 } else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
                     continue;
                 }else if(currentMap->hikerMap[npc->mapX + x][npc->mapY + y] <= minCost){
@@ -397,7 +407,7 @@ void MoveRival (nonPlayerCharacter* npc){
                 //Start battle if moving onto player
                 if(npc->mapX + x == pc->mapX && npc->mapY + y == pc->mapY  &&
                    currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]){
-                    StartBattle();
+                    StartBattle(npc);
                 } else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] == INT32_MAX || IsNpcAtXY(npc->mapX + x, npc->mapY + y)){
                     continue;
                 }else if(currentMap->rivalMap[npc->mapX + x][npc->mapY + y] <= minCost){
@@ -471,7 +481,7 @@ void MovePacer (nonPlayerCharacter* npc){
     //Start battle if moving onto player
     if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY &&
        currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]) {
-        StartBattle();
+        StartBattle(npc);
     } else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = (npc->direction + 2) % 4;
     } else{
@@ -520,7 +530,7 @@ void MoveWanderer (nonPlayerCharacter* npc){
     //Start battle if moving onto player
     if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY &&
        currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]){
-        StartBattle();
+        StartBattle(npc);
     }else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = rand() % 4; //Set random direction 1-4
     } else{
@@ -569,7 +579,7 @@ void MoveRandomWalker(nonPlayerCharacter* npc){
     //Start battle if moving onto player
     if(npc->mapX + xDiff == pc->mapX && npc->mapY + yDiff == pc->mapY &&
        currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_CENTER] && currentMap->map[pc->mapX][pc->mapY] != SYMBOLS[SYMBOL_POKE_MART]){
-        StartBattle();
+        StartBattle(npc);
     } else if(cost == INT32_MAX || IsNpcAtXY(npc->mapX + xDiff, npc->mapY + yDiff)){
         npc->direction = rand() % 4; //Set random direction 1-4
     } else{
@@ -586,15 +596,15 @@ void MoveNPCS(){
     //Find lowest cost NPC(S)
     while(currentMap->npcHeap.size > 0 && ((nonPlayerCharacter*) heap_peek_min(&currentMap->npcHeap))->nextMoveTime <= currentMap->currentTime){
         nonPlayerCharacter* npc = (nonPlayerCharacter*) heap_remove_min(&currentMap->npcHeap);
-        if(npc->npcType == SYMBOL_HIKER){
+        if(npc->npcType == SYMBOL_HIKER && npc->isAlive){
             MoveHiker(npc);
-        }else if(npc->npcType == SYMBOL_RIVAL){
+        }else if(npc->npcType == SYMBOL_RIVAL && npc->isAlive){
             MoveRival(npc);
-        }else if(npc->npcType == SYMBOL_PACER){
+        }else if(npc->npcType == SYMBOL_PACER && npc->isAlive){
             MovePacer(npc);
-        }else if(npc->npcType == SYMBOL_WANDERER){
+        }else if(npc->npcType == SYMBOL_WANDERER && npc->isAlive){
             MoveWanderer(npc);
-        }else if(npc->npcType == SYMBOL_RANDOM_WALKER){
+        }else if(npc->npcType == SYMBOL_RANDOM_WALKER && npc->isAlive){
            MoveRandomWalker(npc);
         }else{
             continue;
@@ -830,11 +840,11 @@ void PlaceNPCs(){
     }
 }
 
-void PlacePlayerCharacter(){
+void PlacePlayerCharacter() {
     int randomPlayerLocationX = (rand() % ((MAP_X_LENGTH - 2) - 2)) + 2;
     //Let's look for a spot we can place a player, and if it's found then update where we want to place the player for starts
-    for(int y = 1; y < MAP_Y_LENGTH - 1; y++){
-        if(currentMap->map[randomPlayerLocationX][y] == SYMBOLS[SYMBOL_PATH]){
+    for (int y = 1; y < MAP_Y_LENGTH - 1; y++) {
+        if (currentMap->map[randomPlayerLocationX][y] == SYMBOLS[SYMBOL_PATH]) {
             //We now want to also update player info
             pc->mapX = randomPlayerLocationX;
             pc->mapY = y;
@@ -843,14 +853,6 @@ void PlacePlayerCharacter(){
     }
     GenerateCostMap(0);
     GenerateCostMap(1);
-}
-
-int IsPositionInMap(int x, int y){
-    if(x > MAP_X_LENGTH - 1 || x < 0 || y > MAP_Y_LENGTH - 1 || y < 0){
-        return 0;
-    }else{
-        return 1;
-    }
 }
 
 void GenerateMap(int newMapX, int newMapY) {
@@ -869,19 +871,19 @@ void GenerateMap(int newMapX, int newMapY) {
     int randomWestOpening = GenerateRandomY(2);
 
     //Align North opening with applicable maps South opening
-    if(IsPositionInMap(newMapX, newMapY - 1) && worldMap[newMapX][newMapY - 1] != NULL){
+    if(worldMap[newMapX][newMapY - 1] != NULL){
         randomNorthOpening = worldMap[newMapX][newMapY - 1]->southOpening;
     }
     //Align South opening with applicable maps North opening
-    if(IsPositionInMap(newMapX, newMapY + 1) && worldMap[newMapX][newMapY + 1] != NULL){
+    if(worldMap[newMapX][newMapY + 1] != NULL){
         randomSouthOpening = worldMap[newMapX][newMapY + 1]->northOpening;
     }
     //Align East opening with applicable maps West opening
-    if(IsPositionInMap(newMapX + 1, newMapY) && worldMap[newMapX + 1][newMapY] != NULL){
+    if(worldMap[newMapX + 1][newMapY] != NULL){
         randomEastOpening = worldMap[newMapX + 1][newMapY]->westOpening;
     }
     //Align west opening with applicable maps east opening
-    if(IsPositionInMap(newMapX - 1, newMapY) && worldMap[newMapX - 1][newMapY] != NULL){
+    if(worldMap[newMapX - 1][newMapY] != NULL){
         randomWestOpening = worldMap[newMapX - 1][newMapY]->eastOpening;
     }
 
@@ -1069,13 +1071,50 @@ int IsValidPlayerMovement(int currX, int currY){
     }else{
         for(int i = 0; i < (MAP_X_LENGTH * MAP_Y_LENGTH) - 1; i++){
             if(currentMap->npc[i].mapX == currX && currentMap->npc[i].mapY == currY){
-                StartBattle();
+                StartBattle(&currentMap->npc[i]);
                 return 0;
             }
         }
         pc->isValidMovement = 1;
         return 1;
     }
+}
+
+void MoveMap(int x, int y, char c){
+    if(worldMap[x][y] == NULL){
+        GenerateMap(x, y);
+        switch(c){
+            case 'n':
+                pc->mapY = MAP_Y_LENGTH - 2;
+                break;
+            case 'e':
+                pc->mapX = 1;
+                break;
+            case 's':
+                pc->mapY = 1;
+                break;
+            case 'w':
+                pc->mapX = MAP_X_LENGTH - 2;
+                break;
+        }
+    }else{
+        currentMap = worldMap[x][y];
+        switch(c){
+            case 'n':
+                pc->mapY = MAP_Y_LENGTH - 2;
+                break;
+            case 'e':
+                pc->mapX = 1;
+                break;
+            case 's':
+                pc->mapY = 1;
+                break;
+            case 'w':
+                pc->mapX = MAP_X_LENGTH - 2;
+                break;
+        }
+    }
+    pc->isValidMovement = 1; //Jank
 }
 
 void MovePlayerCharacter(char userInputCharacter) {
@@ -1090,24 +1129,18 @@ void MovePlayerCharacter(char userInputCharacter) {
             isValidMovement = 1;
         }else if(currentMap->map[pc->mapX][pc->mapY - 1] == SYMBOLS[SYMBOL_PATH] && pc->mapY - 1 == 0){
             //If we want to move to the map to the north then do so?
-            if(worldMap[currentMap->worldLocationX][currentMap->worldLocationY - 1] == NULL){
-                GenerateMap(currentMap->worldLocationX, currentMap->worldLocationY - 1);
-                currentMap->southOpening = pc->mapX;
-                pc->mapY = MAP_Y_LENGTH - 2;
-                pc->isValidMovement = 1; //Jank
-                isValidMovement = 1;
-            }else{
-                currentMap = worldMap[currentMap->worldLocationX][currentMap->worldLocationY - 1];
-                pc->mapY = MAP_Y_LENGTH - 2;
-                pc->isValidMovement = 1; //Jank
-                isValidMovement = 1;
-            }
+            MoveMap(currentMap->worldLocationX, currentMap->worldLocationY - 1, 'n');
+            isValidMovement = 1;
         }
     } else if (userInputCharacter == '6' || userInputCharacter == 'l') {
         //Check if the incremented movement is valid(Which we're going up so its x+1)
         if (IsValidPlayerMovement(pc->mapX + 1, pc->mapY)) {
             //Set updated position of player
             pc->mapX = pc->mapX + 1;
+            isValidMovement = 1;
+        }else if(currentMap->map[pc->mapX + 1][pc->mapY] == SYMBOLS[SYMBOL_PATH] && pc->mapX + 1 == MAP_X_LENGTH - 1){
+            //If we want to move to the map to the east then do so?
+            MoveMap(currentMap->worldLocationX + 1, currentMap->worldLocationY, 'e');
             isValidMovement = 1;
         }
     } else if (userInputCharacter == '2' || userInputCharacter == 'j') {
@@ -1116,12 +1149,20 @@ void MovePlayerCharacter(char userInputCharacter) {
             //Set updated position of player
             pc->mapY = pc->mapY + 1;
             isValidMovement = 1;
+        }else if(currentMap->map[pc->mapX][pc->mapY + 1] == SYMBOLS[SYMBOL_PATH] && pc->mapY + 2 == MAP_Y_LENGTH){
+            //If we want to move to the map to the south then do so?
+            MoveMap(currentMap->worldLocationX, currentMap->worldLocationY + 1, 's');
+            isValidMovement = 1;
         }
     } else if (userInputCharacter == '4' || userInputCharacter == 'h') {
         //Check if the incremented movement is valid(Which we're going up so its x-1)
         if (IsValidPlayerMovement(pc->mapX - 1, pc->mapY)) {
             //Set updated position of player
             pc->mapX = pc->mapX - 1;
+            isValidMovement = 1;
+        }else if(currentMap->map[pc->mapX - 1][pc->mapY] == SYMBOLS[SYMBOL_PATH] && pc->mapX - 1 == 0){
+            //If we want to move to the map to the west then do so?
+            MoveMap(currentMap->worldLocationX - 1, currentMap->worldLocationY, 'w');
             isValidMovement = 1;
         }
     } else if(userInputCharacter == '5' || userInputCharacter == ' ' || userInputCharacter == '.'){
@@ -1134,6 +1175,16 @@ void MovePlayerCharacter(char userInputCharacter) {
             pc->mapX = pc->mapX - 1;
             pc->mapY = pc->mapY - 1;
             isValidMovement = 1;
+        }else if(currentMap->map[pc->mapX - 1][pc->mapY - 1] == SYMBOLS[SYMBOL_PATH] && (pc->mapY - 1 == 0 || pc->mapX - 1 == 0)){
+            //If we want to move to the map to the north then do so?
+            if(pc->mapY - 1 == 0){
+                MoveMap(currentMap->worldLocationX, currentMap->worldLocationY - 1, 'n');
+                pc->mapX--;
+            }else if(pc->mapX - 1 == 0){
+                MoveMap(currentMap->worldLocationX - 1, currentMap->worldLocationY, 'w');
+                pc->mapY--;
+            }
+            isValidMovement = 1;
         }
     } else if(userInputCharacter == '9' || userInputCharacter == 'u'){
         //Upper right
@@ -1141,6 +1192,16 @@ void MovePlayerCharacter(char userInputCharacter) {
             //Set updated position of player
             pc->mapX = pc->mapX + 1;
             pc->mapY = pc->mapY - 1;
+            isValidMovement = 1;
+        }else if(currentMap->map[pc->mapX + 1][pc->mapY - 1] == SYMBOLS[SYMBOL_PATH] && (pc->mapY - 1 == 0 || pc->mapX + 2 == MAP_X_LENGTH)){
+            //If we want to move to the map to the north then do so?
+            if(pc->mapY - 1 == 0){
+                MoveMap(currentMap->worldLocationX, currentMap->worldLocationY - 1, 'n');
+                pc->mapX++;
+            }else if(pc->mapX + 1 == MAP_X_LENGTH - 1){
+                MoveMap(currentMap->worldLocationX + 1, currentMap->worldLocationY, 'e');
+                pc->mapY--;
+            }
             isValidMovement = 1;
         }
     } else if(userInputCharacter == '1' || userInputCharacter == 'b'){
@@ -1150,6 +1211,16 @@ void MovePlayerCharacter(char userInputCharacter) {
             pc->mapX = pc->mapX - 1;
             pc->mapY = pc->mapY + 1;
             isValidMovement = 1;
+        }else if(currentMap->map[pc->mapX - 1][pc->mapY + 1] == SYMBOLS[SYMBOL_PATH] && (pc->mapY + 2 == MAP_Y_LENGTH || pc->mapX - 1 == 0)){
+            //If we want to move to the map to the south then do so?
+            if(pc->mapY + 2 == MAP_Y_LENGTH){
+                MoveMap(currentMap->worldLocationX, currentMap->worldLocationY + 1, 's');
+                pc->mapX--;
+            }else if(pc->mapX - 1 == 0){
+                MoveMap(currentMap->worldLocationX - 1, currentMap->worldLocationY, 'w');
+                pc->mapY++;
+            }
+            isValidMovement = 1;
         }
     } else if(userInputCharacter == '3' || userInputCharacter == 'n'){
         //Bottom right
@@ -1157,6 +1228,16 @@ void MovePlayerCharacter(char userInputCharacter) {
             //Set updated position of player
             pc->mapX = pc->mapX + 1;
             pc->mapY = pc->mapY + 1;
+            isValidMovement = 1;
+        }else if(currentMap->map[pc->mapX + 1][pc->mapY + 1] == SYMBOLS[SYMBOL_PATH] && (pc->mapY + 2 == MAP_Y_LENGTH || pc->mapX + 2 == MAP_X_LENGTH)){
+            //If we want to move to the map to the south then do so?
+            if(pc->mapY + 2 == MAP_Y_LENGTH){
+                MoveMap(currentMap->worldLocationX, currentMap->worldLocationY + 1, 's');
+                pc->mapX++;
+            }else if(pc->mapX + 2 == MAP_X_LENGTH){
+                MoveMap(currentMap->worldLocationX + 1, currentMap->worldLocationY, 'e');
+                pc->mapY++;
+            }
             isValidMovement = 1;
         }
     }
@@ -1175,8 +1256,8 @@ void MovePlayerCharacter(char userInputCharacter) {
     }
     //If we're not standing still then regen cost map
     if(userInputCharacter != '5' && userInputCharacter != ' ' && userInputCharacter != '.' && isValidMovement){
-//        GenerateCostMap(0);
-//        GenerateCostMap(1);
+        GenerateCostMap(0);
+        GenerateCostMap(1);
     }
     //After the player moves we move NPC'S
     MoveNPCS();
@@ -1194,7 +1275,7 @@ void GetUserInput() {
         DisplayMap(currentMap);
         //Printout current location
         if(pc->isValidMovement){
-            printw("Current Location in world: (%d, %d) Xn:%d, Xs:%d", currentMap->worldLocationX - 199, currentMap->worldLocationY - 199, currentMap->northOpening, currentMap->southOpening);
+            printw("Current Location in world: (%d, %d)", currentMap->worldLocationX - 199, currentMap->worldLocationY - 199);
             printw("\nEnter New Command: ");
         }else {
             //If previous command was invalid, show it and the command IG
@@ -1245,6 +1326,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     initscr();
+    keypad(stdscr, TRUE);
     start_color();
     pc = malloc(sizeof(playerCharacter));
     //Start with generating random
