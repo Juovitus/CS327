@@ -77,3 +77,6 @@
     Added various screens(marts/centers/battle/trainer/etc.)
     Added the rest of cross-map movement.
     Added all the things. I lost track.
+3/28/2022
+------------
+    Started work on porting to C++
