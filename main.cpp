@@ -1,4 +1,4 @@
-#include <time.h>
+#include <ctime>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -29,34 +29,36 @@
 
 char SYMBOLS[] = {'C', 'M', '.', ';', '%', '#', '@', 'h', 'r', 'p', 'w', 's', 'n'};
 //COST ORDER = HIKER_COST->RIVAL_COST->PC->OTHERS
-int32_t COST_PATH_OR_CLEARING[] = {10, 10, 10, 10};
-int32_t COST_BUILDING[] = {INT32_MAX, INT32_MAX, 10, INT32_MAX};
-int32_t COST_TALL_GRASS[] = {15, 20, 20, 20};
+int COST_PATH_OR_CLEARING[] = {10, 10, 10, 10};
+int COST_BUILDING[] = {INT32_MAX, INT32_MAX, 10, INT32_MAX};
+int COST_TALL_GRASS[] = {15, 20, 20, 20};
 //Default number of trainers if not passed in a number
 int numTrainers = 10;
 int quit_game = 0;
 char debugMessage[] = {'D', 'E', 'B', 'U', 'G', ' ', 'L', 'I', 'N', 'E'};
 
-typedef struct nonPlayerCharacter{
+class nonPlayerCharacter{
+public:
     int npcType, mapX, mapY, isAlive, nextMoveTime, direction;
     char spawnTileType;
-} nonPlayerCharacter;
+};
 
-typedef struct mapGrid{
+class mapGrid{
+public:
     char map[MAP_X_LENGTH][MAP_Y_LENGTH];
     int northOpening, eastOpening, southOpening, westOpening;
     int worldLocationX, worldLocationY;
-    uint32_t hikerMap[MAP_X_LENGTH][MAP_Y_LENGTH];
-    uint32_t rivalMap[MAP_X_LENGTH][MAP_Y_LENGTH];
-    nonPlayerCharacter npc[MAP_X_LENGTH * MAP_Y_LENGTH];
+    int hikerMap[MAP_X_LENGTH][MAP_Y_LENGTH];
+    int rivalMap[MAP_X_LENGTH][MAP_Y_LENGTH];
+    class nonPlayerCharacter npc[MAP_X_LENGTH * MAP_Y_LENGTH];
     heap_t npcHeap;
     int currentTime;
-} mapGrid;
-mapGrid *currentMap;
-mapGrid *worldMap[399][399];
+};
+class mapGrid *currentMap;
+class mapGrid *worldMap[399][399];
 
 typedef struct Point{
-    uint8_t xPos, yPos;
+    int xPos, yPos;
 } point_t;
 
 typedef struct playerCharacter{
@@ -66,19 +68,19 @@ playerCharacter *pc;
 
 typedef struct path {
     heap_node_t *hn;
-    uint8_t pos[2];
-    uint8_t from[2];
-    int32_t cost;
+    int pos[2];
+    int from[2];
+    int cost;
 } path_t;
 
-void DisplayMap(mapGrid *map){
+void DisplayMap(class mapGrid map){
     //Display dijkstra's stuff
     for(int i = 0; i < 2; i++){
         //GenerateCostMap(i);//THIS GENERATES COST MAP FOR RIVAL AND HIKER---
         //PrintCostMap(i);   //---THIS WILL PRINT THE COST MAP OF THE CURRENT MAP FOR HIKERS AND RIVALS---
     }
 
-    for(int i = 0; i < sizeof(debugMessage); i++){
+    for(int i = 0; i < (signed)sizeof(debugMessage); i++){
         mvaddch(0,i,debugMessage[i]);
     }
     printw("\n");//add +1 to y so it doesnt overwrite debug
@@ -98,7 +100,7 @@ void DisplayMap(mapGrid *map){
             if(pc != NULL && x == pc->mapX && y == pc->mapY){
                 c = SYMBOLS[SYMBOL_PLAYER];
             }else{
-                c = map->map[x][y];
+                c = map.map[x][y];
             }
 
             for(int n = 0; n < numTrainers; n++){
@@ -321,7 +323,7 @@ void DisplayTrainers(){
     int leaveTrainerScreen = 0;
     int screenNum = 1;
     int totalScreens = (numTrainers / 20) + 1; //Min one screen
-    char location[] = "Trainer is";
+    //char location[] = "Trainer is";
     while(!leaveTrainerScreen){
         //CLEAR SCREEN BEFORE STUFF
         clear();
@@ -614,19 +616,19 @@ void MoveNPCS(){
     }
 }
 
-int32_t Dijkstra_Path(mapGrid *map, struct Point from, struct Point to, uint32_t characterType){
+int32_t Dijkstra_Path(class mapGrid map, struct Point from, struct Point to, int characterType){
     static path_t path[MAP_Y_LENGTH][MAP_X_LENGTH], *p;
 
     heap_t h;
-    uint32_t x, y;
-    uint8_t dim_x = 1, dim_y = 0;
+    int x, y;
+    int dim_x = 1, dim_y = 0;
     //Set costs for current character type
     int costCenter = COST_BUILDING[characterType];
     int costMart = COST_BUILDING[characterType];
     int costPath = COST_PATH_OR_CLEARING[characterType];
     int costTallGrass = COST_TALL_GRASS[characterType];
     int costClearing = COST_PATH_OR_CLEARING[characterType];
-    uint32_t costMap[MAP_X_LENGTH][MAP_Y_LENGTH];
+    int costMap[MAP_X_LENGTH][MAP_Y_LENGTH];
 
     //Set positions and cost
     for(y = 0; y < MAP_Y_LENGTH; y++){
@@ -635,15 +637,15 @@ int32_t Dijkstra_Path(mapGrid *map, struct Point from, struct Point to, uint32_t
             path[y][x].pos[dim_y] = y;
             path[y][x].cost = INT32_MAX;
             //Set costs for hiker and rival in map
-            if(map->map[x][y] == SYMBOLS[SYMBOL_POKE_CENTER]){
+            if(map.map[x][y] == SYMBOLS[SYMBOL_POKE_CENTER]){
                 costMap[x][y] = costCenter;
-            } else if(map->map[x][y] == SYMBOLS[SYMBOL_POKE_MART]){
+            } else if(map.map[x][y] == SYMBOLS[SYMBOL_POKE_MART]){
                 costMap[x][y] = costMart;
-            } else if(map->map[x][y] == SYMBOLS[SYMBOL_PATH]){
+            } else if(map.map[x][y] == SYMBOLS[SYMBOL_PATH]){
                 costMap[x][y] = costPath;
-            } else if(map->map[x][y] == SYMBOLS[SYMBOL_TALL_GRASS]){
+            } else if(map.map[x][y] == SYMBOLS[SYMBOL_TALL_GRASS]){
                 costMap[x][y] = costTallGrass;
-            } else if(map->map[x][y] == SYMBOLS[SYMBOL_CLEARING]){
+            } else if(map.map[x][y] == SYMBOLS[SYMBOL_CLEARING]){
                 costMap[x][y] = costClearing;
             } else if(x == pc->mapX && y == pc->mapY){
                 costMap[x][y] = 0;
@@ -658,10 +660,10 @@ int32_t Dijkstra_Path(mapGrid *map, struct Point from, struct Point to, uint32_t
     heap_init(&h, Path_Compare, NULL);
     for(y = 1; y < MAP_Y_LENGTH-1; y++){
         for(x = 1; x < MAP_X_LENGTH-1; x++){
-            if(map->map[x][y] != SYMBOLS[SYMBOL_BOULDER] && !IsNpcAtXY(x, y)){
+            if(map.map[x][y] != SYMBOLS[SYMBOL_BOULDER] && !IsNpcAtXY(x, y)){
                 if(characterType == PLAYER_COST){
                     path[y][x].hn = heap_insert(&h, &path[y][x]);
-                }else if(map->map[x][y] != SYMBOLS[SYMBOL_POKE_CENTER] && map->map[x][y] != SYMBOLS[SYMBOL_POKE_MART]){
+                }else if(map.map[x][y] != SYMBOLS[SYMBOL_POKE_CENTER] && map.map[x][y] != SYMBOLS[SYMBOL_POKE_MART]){
                     path[y][x].hn = heap_insert(&h, &path[y][x]);
                 }else{
                     path[y][x].hn = NULL;
@@ -749,7 +751,7 @@ int32_t Dijkstra_Path(mapGrid *map, struct Point from, struct Point to, uint32_t
     return INT32_MAX;
 }
 
-void GenerateCostMap(uint32_t characterType){
+void GenerateCostMap(int characterType){
     for(int y = 0; y < MAP_Y_LENGTH; y++){
         for(int x = 0; x < MAP_X_LENGTH; x++){
             point_t to;
@@ -759,9 +761,9 @@ void GenerateCostMap(uint32_t characterType){
             from.xPos = pc->mapX;
             from.yPos = pc->mapY;
             if(characterType == HIKER_COST){
-                currentMap->hikerMap[x][y] = Dijkstra_Path(currentMap, from, to, HIKER_COST);
+                currentMap->hikerMap[x][y] = Dijkstra_Path(*currentMap, from, to, HIKER_COST);
             }else if (characterType == RIVAL_COST){
-                currentMap->rivalMap[x][y] = Dijkstra_Path(currentMap, from, to, RIVAL_COST);
+                currentMap->rivalMap[x][y] = Dijkstra_Path(*currentMap, from, to, RIVAL_COST);
             }else{
                 printf("\nWAT?\n");
             }
@@ -769,7 +771,7 @@ void GenerateCostMap(uint32_t characterType){
     }
 }
 
-void PrintCostMap(uint32_t characterType){
+void PrintCostMap(int characterType){
     for(int y = 0; y < MAP_Y_LENGTH; y++){
         for(int x = 0; x < MAP_X_LENGTH; x++){
             if(characterType == HIKER_COST){
@@ -858,12 +860,12 @@ void PlacePlayerCharacter() {
 void GenerateMap(int newMapX, int newMapY) {
     //If out of bounds say error
     if(newMapX > 398 || newMapY > 398 || newMapX < 0 || newMapY < 0){
-        DisplayMap(currentMap);
+        DisplayMap(*currentMap);
         strcpy(debugMessage, "InvMapLoc");
         return;
     }
 
-    currentMap = malloc(sizeof(mapGrid));
+    currentMap = static_cast<mapGrid *>(malloc(sizeof(mapGrid)));
     //Generate random openings for map on N/E/S/W sides
     int randomNorthOpening = GenerateRandomX(2);
     int randomEastOpening = GenerateRandomY(2);
@@ -1272,7 +1274,7 @@ void GetUserInput() {
     PlacePlayerCharacter();
 
     while (!quit_game) {
-        DisplayMap(currentMap);
+        DisplayMap(*currentMap);
         //Printout current location
         if(pc->isValidMovement){
             printw("Current Location in world: (%d, %d)", currentMap->worldLocationX - 199, currentMap->worldLocationY - 199);
@@ -1328,7 +1330,7 @@ int main(int argc, char *argv[]) {
     initscr();
     keypad(stdscr, TRUE);
     start_color();
-    pc = malloc(sizeof(playerCharacter));
+    pc = static_cast<playerCharacter *>(malloc(sizeof(playerCharacter)));
     //Start with generating random
     srand(time(NULL));
     pc->isValidMovement = 1;

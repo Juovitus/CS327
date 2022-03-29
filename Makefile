@@ -1,17 +1,36 @@
-#all to have multiple executables
-all: Poke
-CC=gcc
-CFLAGS=-I.
-LIBS=-lm
-#DEPS = 
+CC = gcc
+CXX = g++
+ECHO = echo
+RM = rm -f
+
+CFLAGS = -Wall -Werror -ggdb -funroll-loops
+CXXFLAGS = -Wall -Werror -ggdb -funroll-loops
+
+LDFLAGS = -lncurses
+
+BIN = Poke
+OBJS = main.o heap.o
+
+all: $(BIN)
+
+$(BIN): $(OBJS)
+	@$(ECHO) Linking $@
+	@$(CXX) $^ -o $@ $(LDFLAGS)
+
+-include $(OBJS:.o=.d)
 
 %.o: %.c
-	$(CC) -g -c -o $@ $< $(CFLAGS)
+	@$(ECHO) Compiling $<
+	@$(CC) $(CFLAGS) -MMD -MF $*.d -c $<
 
-Poke: main.o -lncurses heap.c heap.h
-	$(CC) -g -o $@ $^ $(CFLAGS)
-	rm -f *.o
+%.o: %.cpp
+	@$(ECHO) Compiling $<
+	@$(CXX) $(CXXFLAGS) -MMD -MF $*.d -c $<
 
 clean:
-	rm -f *.o output Poke
-	rm -f *.tar.gz
+	@$(ECHO) Removing all generated files
+	@$(RM) *.o $(BIN) *.d TAGS core vgcore.* gmon.out
+
+clobber: clean
+	@$(ECHO) Removing backup files
+	@$(RM) *~ \#* *pgm
