@@ -87,3 +87,6 @@
 ------------
     Started work on parsing data from passed in CSV files
     Currently have it reading accurate number of lines, classes to come ig?
+3/31/2022
+------------
+    Added all file parsing. No bugs I don't think?

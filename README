@@ -96,6 +96,15 @@ EnterPokeCenter()
 StartBattle(nonPlayerCharacter* npc)
     Starts a battle with a specific npc, won't do anything if npc is dead
 
+void OpenFile()
+    Attempts to open a file with given name at three different locations
+
+void ParseFile(string inputFile)
+    Parses all data from given file and adds it to relevant class
+
+void PrintParsedData(string inputFile)
+    Outputs the given class information from the input file
+
 Controls:
     8 | k: Attempt to move player one cell up
     6 | l: Attempt to move player one cell to the right

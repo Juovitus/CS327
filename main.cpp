@@ -7,6 +7,11 @@
 #include<ncurses.h>
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <sstream>
+#include <string>
+#include <algorithm>
+#include <regex>
 
 using namespace std;
 
@@ -61,6 +66,52 @@ public:
 };
 class mapGrid *currentMap;
 class mapGrid *worldMap[399][399];
+
+class Pokemon{
+public:
+    string name;
+    int ID, species, height, weight, baseEXP, order, is_default;
+};
+
+class Move{
+public:
+    string name;
+    int ID, generation, type, power, pp, accuracy, priority, target,
+    damage_class, effect, effectChance, contestType, contestEffect, superContestEffect;
+};
+
+class PokemonMove{
+public:
+    int pokemonID, version, moveID, moveMethod, level, order;
+};
+
+class PokemonSpecies{
+public:
+    string name;
+    int ID, generation, evolvesFromID, evolutionID, color, shape,
+    habitat, gender, captureRate, baseHappiness, isBaby, hatchCounter, genderDifferences,
+    growthRate, differentForms, isLegendary, isMythical, order, conquestOrder;
+};
+
+class Experience{
+public:
+    int growthRate, level, experience;
+};
+
+class TypeNames{
+public:
+    string type;
+    int ID, localLanguage;
+};
+
+
+
+vector<Pokemon> pokemon;
+vector<Move> moves;
+vector<PokemonMove> pokemonMoves;
+vector<PokemonSpecies> pokemonSpecies;
+vector<Experience> experience;
+vector<TypeNames> typeNames;
 
 typedef struct Point{
     int xPos, yPos;
@@ -1316,23 +1367,323 @@ void GetUserInput() {
     endwin();
 }
 
-void ParseFile() {
-    string currLine = "";
-    int x = 0;
-    while(getline(currFile, currLine)){
-        x++;
-        cout << "Line number: " << x << endl;
-
-        //Reset current line
-        currLine = "";
+void PrintParsedData(string inputFile){
+    if(inputFile == "pokemon"){
+        for(Pokemon p: pokemon){
+            string outputString = "";
+            outputString += to_string(p.ID) + "," + p.name + "," + to_string(p.species) + "," + to_string(p.height) +
+                            "," + to_string(p.weight) + "," + to_string(p.baseEXP) + "," + to_string(p.order) +
+                            "," + to_string(p.is_default);
+            outputString = regex_replace(outputString, regex("-1"), " ");
+            cout << outputString << endl;
+        }
+    }else if(inputFile == "moves"){
+        for(Move m: moves){
+            string outputString = "";
+            outputString += to_string(m.ID) + "," + m.name + "," + to_string(m.generation) + "," + to_string(m.type) +
+                            "," + to_string(m.power) + "," + to_string(m.pp) + "," + to_string(m.accuracy) +
+                            "," + to_string(m.priority) + "," + to_string(m.target) + "," + to_string(m.damage_class) +
+                            "," + to_string(m.effect) + "," + to_string(m.effectChance) + "," + to_string(m.contestType) +
+                            "," + to_string(m.contestEffect) + "," + to_string(m.superContestEffect);
+            outputString = regex_replace(outputString, regex("-1"), " ");
+            cout << outputString << endl;
+        }
+    }else if(inputFile == "pokemon_moves"){
+        for(PokemonMove pm: pokemonMoves){
+            string outputString = "";
+            outputString += to_string(pm.pokemonID) + "," + to_string(pm.version) + "," + to_string(pm.moveID) +
+                            "," + to_string(pm.moveMethod) + "," + to_string(pm.level) + "," + to_string(pm.order);
+            outputString = regex_replace(outputString, regex("-1"), " ");
+            cout << outputString << endl;
+        }
+    }else if(inputFile == "pokemon_species"){
+        for(PokemonSpecies ps: pokemonSpecies){
+            string outputString = "";
+            outputString += to_string(ps.ID) + "," + ps.name + "," + to_string(ps.generation) + "," + to_string(ps.evolvesFromID) +
+                            "," + to_string(ps.evolutionID) + "," + to_string(ps.color) + "," + to_string(ps.shape) +
+                            "," + to_string(ps.habitat) + "," + to_string(ps.gender) + "," + to_string(ps.captureRate) +
+                            "," + to_string(ps.baseHappiness) + "," + to_string(ps.isBaby) + "," + to_string(ps.hatchCounter) +
+                            "," + to_string(ps.genderDifferences) + "," + to_string(ps.growthRate) + "," + to_string(ps.differentForms) +
+                            "," + to_string(ps.isLegendary) + "," + to_string(ps.isMythical) + "," + to_string(ps.order) + "," + to_string(ps.conquestOrder);
+            outputString = regex_replace(outputString, regex("-1"), " ");
+            cout << outputString << endl;
+        }
+    }else if(inputFile == "experience"){
+        for(Experience e: experience){
+            string outputString = "";
+            outputString += to_string(e.growthRate) + "," + to_string(e.level) + "," + to_string(e.experience);
+            outputString = regex_replace(outputString, regex("-1"), " ");
+            cout << outputString << endl;
+        }
+    }else if(inputFile == "type_names"){
+        for(TypeNames tn: typeNames){
+            string outputString = "";
+            outputString += to_string(tn.ID) + "," + to_string(tn.localLanguage) + "," + tn.type;
+            outputString = regex_replace(outputString, regex("-1"), " ");
+            cout << outputString << endl;
+        }
+    }else{
+        cout << "IDK how you got here honestly." << endl;
     }
+}
+
+void ParseFile(string inputFile) {
+
+    string line = "";
+    //Get rid of first line
+    getline(currFile, line);
+    while(getline(currFile, line)){
+        string temp = "";
+        stringstream currString(line);
+        if(inputFile == "pokemon"){
+            Pokemon currPoke = *new Pokemon;
+            //Set Pokémon ID
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPoke.ID = atoi(temp.c_str());
+            //Set Pokémon name
+            getline(currString, currPoke.name, ',');
+            //Set Pokémon species
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPoke.species = atoi(temp.c_str());
+            //Set Pokémon height
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPoke.height = atoi(temp.c_str());
+            //Set Pokémon weight
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPoke.weight = atoi(temp.c_str());
+            //set Pokémon base experience
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPoke.baseEXP = atoi(temp.c_str());
+            //Set Pokémon order
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPoke.order = atoi(temp.c_str());
+            //Set Pokémon is_default
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPoke.is_default = atoi(temp.c_str());
+            //Add current pokemon to pokemon vector and print out the current pokemon
+            pokemon.push_back(currPoke);
+        }else if(inputFile == "moves"){
+            Move currMove = *new Move;
+            //Set Move ID
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.ID = atoi(temp.c_str());
+            //Set Move name
+            getline(currString, currMove.name, ',');
+            //Set Move generation
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.generation = atoi(temp.c_str());
+            //Set Move type
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.type = atoi(temp.c_str());
+            //Set Move power
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.power = atoi(temp.c_str());
+            //Set Move pp
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.pp = atoi(temp.c_str());
+            //Set Move accuracy
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.accuracy = atoi(temp.c_str());
+            //Set Move priority
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.priority = atoi(temp.c_str());
+            //Set Move target
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.target = atoi(temp.c_str());
+            //Set Move damage class
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.damage_class = atoi(temp.c_str());
+            //Set Move effect
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.effect = atoi(temp.c_str());
+            //Set Move effect chance
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.effectChance = atoi(temp.c_str());
+            //Set Move contest type
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.contestType = atoi(temp.c_str());
+            //Set Move contest effect
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.contestEffect = atoi(temp.c_str());
+            //Set Move super contest effect
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currMove.superContestEffect = atoi(temp.c_str());
+            //Add current move to list of moves
+            moves.push_back(currMove);
+        }else if(inputFile == "pokemon_moves"){
+            PokemonMove currPokemonMove = *new PokemonMove;
+            //Set Pokemon ID
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonMove.pokemonID = atoi(temp.c_str());
+            //Set Version
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonMove.version = atoi(temp.c_str());
+            //Set Move ID
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonMove.moveID = atoi(temp.c_str());
+            //Set Move Method
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonMove.moveMethod = atoi(temp.c_str());
+            //Set Level
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonMove.level = atoi(temp.c_str());
+            //Set Order
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonMove.order = atoi(temp.c_str());
+            //Add current move to list of moves
+            pokemonMoves.push_back(currPokemonMove);
+        }else if(inputFile == "pokemon_species"){
+            PokemonSpecies currPokemonSpecies = *new PokemonSpecies;
+            //Set Pokemon Species ID
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.ID = atoi(temp.c_str());
+            //Set Pokemon Species name
+            getline(currString, currPokemonSpecies.name, ',');
+            //Set Pokemon Species generation
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.generation = atoi(temp.c_str());
+            //Set Pokemon Species evolves from species id
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.evolutionID = atoi(temp.c_str());
+            //Set Pokemon Species evolution chain id
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.evolvesFromID = atoi(temp.c_str());
+            //Set Pokemon Species color
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.color = atoi(temp.c_str());
+            //Set Pokemon Species shape
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.shape = atoi(temp.c_str());
+            //Set Pokemon Species habitat
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.habitat = atoi(temp.c_str());
+            //Set Pokemon Species gender
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.gender = atoi(temp.c_str());
+            //Set Pokemon Species captureRate rate
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.captureRate = atoi(temp.c_str());
+            //Set Pokemon Species base baseHappiness
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.baseHappiness = atoi(temp.c_str());
+            //Set Pokemon Species is baby
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.isBaby = atoi(temp.c_str());
+            //Set Pokemon Species hatch counter
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.hatchCounter = atoi(temp.c_str());
+            //Set Pokemon Species gender differences
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.genderDifferences = atoi(temp.c_str());
+            //Set Pokemon Species growth rate
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.growthRate = atoi(temp.c_str());
+            //Set Pokemon Species form switchable
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.differentForms = atoi(temp.c_str());
+            //Set Pokemon Species is legendary
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.isLegendary = atoi(temp.c_str());
+            //Set Pokemon Species is mythic
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.isMythical = atoi(temp.c_str());
+            //Set Pokemon Species order
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.order = atoi(temp.c_str());
+            //Set Pokemon Species conquestOrder order
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currPokemonSpecies.conquestOrder = atoi(temp.c_str());
+            //Add current species to list of species
+            pokemonSpecies.push_back(currPokemonSpecies);
+        }else if(inputFile == "experience"){
+            Experience currExperience = *new Experience;
+            //Set Growth rate id
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currExperience.growthRate = atoi(temp.c_str());
+            //Set level
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currExperience.level = atoi(temp.c_str());
+            //Set experience
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currExperience.experience = atoi(temp.c_str());
+            //Add current experience to list of experiences
+            experience.push_back(currExperience);
+        }else if(inputFile == "type_names"){
+            TypeNames currTypeName = *new TypeNames;
+            //Set Type
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currTypeName.ID = atoi(temp.c_str());
+            //Set Local language
+            getline(currString, temp, ',');
+            if(temp != "9") continue; //if language is not english we don't want it.
+            if(temp == "") temp = "-1";
+            currTypeName.localLanguage = atoi(temp.c_str());
+            //Set move name
+            getline(currString, currTypeName.type, ',');
+            if(currTypeName.type == "") currTypeName.type = "-1";
+            //Add current type to list of types
+            typeNames.push_back(currTypeName);
+        }
+
+    }
+    PrintParsedData(inputFile);
 }
 
 void OpenFile() {
     string inputFile;
     cout << "Enter file you want to parse excluding the extension: ";
     cin >> inputFile;
-    cout << "Your chosen input file: " << inputFile;
+    cout << "Your chosen input file: " << inputFile << endl;
     const char* env = getenv("HOME");
     if(env == NULL){
         cout << "Home dir not found?" << endl;
@@ -1345,42 +1696,44 @@ void OpenFile() {
     if(currFile.fail()){
         currFile.open(homeEnv + "/.poke327/" + inputFile + ".csv");
         if(currFile.fail()){
-            currFile.open(inputFile + ".csv");
+            //I want to look in project directory into a folder named Pokedex
+            currFile.open("Pokedex/"+ inputFile + ".csv");
             if(currFile.fail()){
-                cout << "\nBro where the files at?\n---No file of that type found in any of the three directories---\n";
+                cout << "\nBro where the files at?\n---No file named '" + inputFile + ".csv' found in any of the three directories---\n";
             }
         }
     }
-    ParseFile();
+    ParseFile(inputFile);
 }
 
 int main(int argc, char *argv[]) {
     OpenFile();
-//   //Check for passed in number of trainers, if there is one then set it. (No error checking)
-//    int isNum = 0;
-//    for(int i = 0; i < argc; i++){
-//        if(isNum){
-//            numTrainers = atoi(argv[i]);
-//        }
-//        if(strstr(argv[i], "--numTrainers") || strstr(argv[i], "--numtrainers")){
-//            isNum = 1;
-//        }
-//    }
-//    if(numTrainers > 1200){
-//        printf("You've entered too many trainers, please keep it below 1200.\n");
-//        printf("Can't overfill the map!:)\n");
-//        return 0;
-//    }
-//    initscr();
-//    keypad(stdscr, TRUE);
-//    start_color();
-//    pc = static_cast<playerCharacter *>(malloc(sizeof(playerCharacter)));
-//    //Start with generating random
-//    srand(time(NULL));
-//    pc->isValidMovement = 1;
+    return 0; //WE DON'T WANT TO LOAD ANYTHING FOR THIS ASSIGNMENT SO RETURN
+   //Check for passed in number of trainers, if there is one then set it. (No error checking)
+    int isNum = 0;
+    for(int i = 0; i < argc; i++){
+        if(isNum){
+            numTrainers = atoi(argv[i]);
+        }
+        if(strstr(argv[i], "--numTrainers") || strstr(argv[i], "--numtrainers")){
+            isNum = 1;
+        }
+    }
+    if(numTrainers > 1200){
+        printf("You've entered too many trainers, please keep it below 1200.\n");
+        printf("Can't overfill the map!:)\n");
+        return 0;
+    }
+    initscr();
+    keypad(stdscr, TRUE);
+    start_color();
+    pc = static_cast<playerCharacter *>(malloc(sizeof(playerCharacter)));
+    //Start with generating random
+    srand(time(NULL));
+    pc->isValidMovement = 1;
 
 
 
-//    //Get user input
-    //GetUserInput();
+    //Get user input
+    GetUserInput();
 }
