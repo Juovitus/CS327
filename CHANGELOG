@@ -80,3 +80,10 @@
 3/28/2022
 ------------
     Started work on porting to C++
+3/29/2022
+------------
+    Finished work on porting to C++
+3/30/2022
+------------
+    Started work on parsing data from passed in CSV files
+    Currently have it reading accurate number of lines, classes to come ig?

@@ -5,6 +5,10 @@
 #include <string.h>
 #include "heap.h"
 #include<ncurses.h>
+#include <iostream>
+#include <fstream>
+
+using namespace std;
 
 #define MAP_X_LENGTH 80
 #define MAP_Y_LENGTH 21
@@ -36,6 +40,7 @@ int COST_TALL_GRASS[] = {15, 20, 20, 20};
 int numTrainers = 10;
 int quit_game = 0;
 char debugMessage[] = {'D', 'E', 'B', 'U', 'G', ' ', 'L', 'I', 'N', 'E'};
+ifstream currFile;
 
 class nonPlayerCharacter{
 public:
@@ -1311,29 +1316,71 @@ void GetUserInput() {
     endwin();
 }
 
+void ParseFile() {
+    string currLine = "";
+    int x = 0;
+    while(getline(currFile, currLine)){
+        x++;
+        cout << "Line number: " << x << endl;
+
+        //Reset current line
+        currLine = "";
+    }
+}
+
+void OpenFile() {
+    string inputFile;
+    cout << "Enter file you want to parse excluding the extension: ";
+    cin >> inputFile;
+    cout << "Your chosen input file: " << inputFile;
+    const char* env = getenv("HOME");
+    if(env == NULL){
+        cout << "Home dir not found?" << endl;
+        return;
+    }
+
+    string homeEnv(env);
+    //Default location
+    currFile.open("/share/cs327/" + inputFile + ".csv");
+    if(currFile.fail()){
+        currFile.open(homeEnv + "/.poke327/" + inputFile + ".csv");
+        if(currFile.fail()){
+            currFile.open(inputFile + ".csv");
+            if(currFile.fail()){
+                cout << "\nBro where the files at?\n---No file of that type found in any of the three directories---\n";
+            }
+        }
+    }
+    ParseFile();
+}
+
 int main(int argc, char *argv[]) {
-   //Check for passed in number of trainers, if there is one then set it. (No error checking)
-    int isNum = 0;
-    for(int i = 0; i < argc; i++){
-        if(isNum){
-            numTrainers = atoi(argv[i]);
-        }
-        if(strstr(argv[i], "--numTrainers") || strstr(argv[i], "--numtrainers")){
-            isNum = 1;
-        }
-    }
-    if(numTrainers > 1200){
-        printf("You've entered too many trainers, please keep it below 1200.\n");
-        printf("Can't overfill the map!:)\n");
-        return 0;
-    }
-    initscr();
-    keypad(stdscr, TRUE);
-    start_color();
-    pc = static_cast<playerCharacter *>(malloc(sizeof(playerCharacter)));
-    //Start with generating random
-    srand(time(NULL));
-    pc->isValidMovement = 1;
-    //Get user input
-    GetUserInput();
+    OpenFile();
+//   //Check for passed in number of trainers, if there is one then set it. (No error checking)
+//    int isNum = 0;
+//    for(int i = 0; i < argc; i++){
+//        if(isNum){
+//            numTrainers = atoi(argv[i]);
+//        }
+//        if(strstr(argv[i], "--numTrainers") || strstr(argv[i], "--numtrainers")){
+//            isNum = 1;
+//        }
+//    }
+//    if(numTrainers > 1200){
+//        printf("You've entered too many trainers, please keep it below 1200.\n");
+//        printf("Can't overfill the map!:)\n");
+//        return 0;
+//    }
+//    initscr();
+//    keypad(stdscr, TRUE);
+//    start_color();
+//    pc = static_cast<playerCharacter *>(malloc(sizeof(playerCharacter)));
+//    //Start with generating random
+//    srand(time(NULL));
+//    pc->isValidMovement = 1;
+
+
+
+//    //Get user input
+    //GetUserInput();
 }
