@@ -90,3 +90,6 @@
 3/31/2022
 ------------
     Added all file parsing. No bugs I don't think?
+4/1/2022
+------------
+    Changed input file method to command line instead of runtime to meet assignment specs. Oops.
