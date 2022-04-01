@@ -43,6 +43,7 @@ int COST_BUILDING[] = {INT32_MAX, INT32_MAX, 10, INT32_MAX};
 int COST_TALL_GRASS[] = {15, 20, 20, 20};
 //Default number of trainers if not passed in a number
 int numTrainers = 10;
+string inputFile = "";
 int quit_game = 0;
 char debugMessage[] = {'D', 'E', 'B', 'U', 'G', ' ', 'L', 'I', 'N', 'E'};
 ifstream currFile;
@@ -1680,9 +1681,6 @@ void ParseFile(string inputFile) {
 }
 
 void OpenFile() {
-    string inputFile;
-    cout << "Enter file you want to parse excluding the extension: ";
-    cin >> inputFile;
     cout << "Your chosen input file: " << inputFile << endl;
     const char* env = getenv("HOME");
     if(env == NULL){
@@ -1707,9 +1705,7 @@ void OpenFile() {
 }
 
 int main(int argc, char *argv[]) {
-    OpenFile();
-    return 0; //WE DON'T WANT TO LOAD ANYTHING FOR THIS ASSIGNMENT SO RETURN
-   //Check for passed in number of trainers, if there is one then set it. (No error checking)
+    //Check for passed in number of trainers, if there is one then set it. (No error checking)
     int isNum = 0;
     for(int i = 0; i < argc; i++){
         if(isNum){
@@ -1717,6 +1713,8 @@ int main(int argc, char *argv[]) {
         }
         if(strstr(argv[i], "--numTrainers") || strstr(argv[i], "--numtrainers")){
             isNum = 1;
+        }else{
+            inputFile = argv[i];
         }
     }
     if(numTrainers > 1200){
@@ -1724,6 +1722,8 @@ int main(int argc, char *argv[]) {
         printf("Can't overfill the map!:)\n");
         return 0;
     }
+    OpenFile();
+    return 0; //WE DON'T WANT TO LOAD ANYTHING FOR THIS ASSIGNMENT SO RETURN
     initscr();
     keypad(stdscr, TRUE);
     start_color();
