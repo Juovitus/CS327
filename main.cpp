@@ -8,10 +8,11 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <sstream>
 #include <string>
 #include <algorithm>
 #include <regex>
+#include <chrono>
+#include <random>
 
 using namespace std;
 
@@ -35,6 +36,8 @@ using namespace std;
 #define PLAYER_COST 2
 #define OTHER_COST 3
 #define ESCAPE_KEY 27
+#define BATTLE_CHANCE 1 //Battle chance is 1/BATTLE_CHANCE when walking over grass
+#define SHINY_RATE 3   //Shiny rate is 1/SHINY RATE when encountering a pokemon
 
 char SYMBOLS[] = {'C', 'M', '.', ';', '%', '#', '@', 'h', 'r', 'p', 'w', 's', 'n'};
 //COST ORDER = HIKER_COST->RIVAL_COST->PC->OTHERS
@@ -43,10 +46,12 @@ int COST_BUILDING[] = {INT32_MAX, INT32_MAX, 10, INT32_MAX};
 int COST_TALL_GRASS[] = {15, 20, 20, 20};
 //Default number of trainers if not passed in a number
 int numTrainers = 10;
-string inputFile = "";
+string inputFiles[] = {"experience", "moves", "pokemon", "pokemon_moves", "pokemon_species", "type_names", "pokemon_stats"};
 int quit_game = 0;
 char debugMessage[] = {'D', 'E', 'B', 'U', 'G', ' ', 'L', 'I', 'N', 'E'};
 ifstream currFile;
+double manhattanDistance = 999.99;
+string pokemonStats[] = {"", "hp", "attack", "defense", "special-attack", "special-defense", "speed", "accuracy", "evasion"};
 
 class nonPlayerCharacter{
 public:
@@ -67,12 +72,6 @@ public:
 };
 class mapGrid *currentMap;
 class mapGrid *worldMap[399][399];
-
-class Pokemon{
-public:
-    string name;
-    int ID, species, height, weight, baseEXP, order, is_default;
-};
 
 class Move{
 public:
@@ -105,7 +104,21 @@ public:
     int ID, localLanguage;
 };
 
+class PokemonStats{
+public:
+    int ID, statID, base_Stat, effort;
+};
 
+class Pokemon{
+public:
+    string name;
+    //1 is male 2 is female
+    int ID, species, height, weight, baseEXP, order, is_default, level, gender;
+    //A pokemon can only have a max number of four moves.
+   PokemonMove moves[4];
+    vector <PokemonMove> availableMoves;
+    bool isShiny = false;
+};
 
 vector<Pokemon> pokemon;
 vector<Move> moves;
@@ -120,6 +133,7 @@ typedef struct Point{
 
 typedef struct playerCharacter{
     int mapX, mapY, isValidMovement;
+    Pokemon team[6];
 } playerCharacter;
 playerCharacter *pc;
 
@@ -131,12 +145,6 @@ typedef struct path {
 } path_t;
 
 void DisplayMap(class mapGrid map){
-    //Display dijkstra's stuff
-    for(int i = 0; i < 2; i++){
-        //GenerateCostMap(i);//THIS GENERATES COST MAP FOR RIVAL AND HIKER---
-        //PrintCostMap(i);   //---THIS WILL PRINT THE COST MAP OF THE CURRENT MAP FOR HIKERS AND RIVALS---
-    }
-
     for(int i = 0; i < (signed)sizeof(debugMessage); i++){
         mvaddch(0,i,debugMessage[i]);
     }
@@ -354,6 +362,87 @@ void EnterPokeMart(){
         char userInput = getch();
         if(userInput == '<'){
             leaveBuilding = 1;
+        }
+    }
+    //Clear screen before going back
+    clear();
+}
+
+void EnterPokemonBattle(){
+    int maxLevel, minLevel;
+    if(manhattanDistance > 200){
+        minLevel = (int)((manhattanDistance - 200) / 2);
+        maxLevel = 100;
+        if(minLevel < 1){
+            minLevel = 1;
+        }
+    }else{
+        minLevel = 1;
+        maxLevel = (int)(manhattanDistance / 2);
+        if(maxLevel < 1){
+            maxLevel = 1;
+        }
+    }
+    //Set level
+    Pokemon encounterPokemon = pokemon.at((rand()%((pokemon.size() - 1))));
+    encounterPokemon.level = (rand()%(maxLevel-minLevel + 1) + minLevel);
+    //Set all available pokemon moves
+    for(PokemonMove pm: pokemonMoves){
+        if(pm.version == 19 && pm.pokemonID == encounterPokemon.species && pm.moveMethod == 1){
+            encounterPokemon.availableMoves.push_back(pm);
+        }
+    }
+    //IDK why moves are empty sometimes but if they are add tackle IG?
+    if(encounterPokemon.availableMoves.empty()){
+        encounterPokemon.availableMoves.push_back(pokemonMoves.at(3));
+    }
+    //Set pokemon name, include if its shiny.
+    string printPokemonName;
+    if((rand()%(SHINY_RATE-1 + 1) + 1) == 1){
+        encounterPokemon.isShiny = true;
+        printPokemonName += "Shiny ";
+    }
+    //Pokemon gender?
+    encounterPokemon.gender = (rand()%(2-1 + 1) + 1);
+    //Set pokemon moves?
+    unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+    std::default_random_engine e(seed);
+    uniform_int_distribution<int> distr(0, (int)(encounterPokemon.availableMoves.size() - 1));
+    if(encounterPokemon.availableMoves.size() > 2){
+        for(int i = 0; i < 2; i++){
+            encounterPokemon.moves[i] = encounterPokemon.availableMoves.at(distr(e));
+        }
+    }else{
+        int numMove = 0;
+        for(PokemonMove pm: encounterPokemon.availableMoves){
+            encounterPokemon.moves[numMove] = pm;
+            numMove++;
+        }
+    }
+
+    init_pair(SHINY_RATE, COLOR_YELLOW, COLOR_BLACK);
+    printPokemonName += encounterPokemon.name;
+    int leaveBattle = 0;
+    while(!leaveBattle){
+        //CLEAR SCREEN BEFORE STUFF
+        clear();
+        printw("Temporary Poke battle page, Pokemon level: %d\nAvailable Moves at this level: %d\n", encounterPokemon.level, encounterPokemon.availableMoves.size());
+        printw("Pokemon Name: ");
+        if(encounterPokemon.isShiny){
+            attron(COLOR_PAIR(SHINY_RATE));
+            printw("%s", printPokemonName.c_str());
+            attroff(COLOR_PAIR(SHINY_RATE));
+        }else{
+            printw("%s", printPokemonName.c_str());
+        }
+        for(PokemonMove pm: encounterPokemon.moves){
+            printw("\nMove id: %d", pm.moveID);
+        }
+        printw("\nUse < to exit battle.");
+        refresh();
+        char userInput = getch();
+        if(userInput == '<'){
+            leaveBattle = 1;
         }
     }
     //Clear screen before going back
@@ -1016,7 +1105,7 @@ void GenerateMap(int newMapX, int newMapY) {
     //Calculate Manhattan distance for chance at placing pokemarts/pokecenters
     int xDifference = abs(newMapX - 199);
     int yDifference = abs(newMapY - 199);
-    double manhattanDistance = xDifference + yDifference;
+    manhattanDistance = xDifference + yDifference;
     double buildingChance;
     if(manhattanDistance > 200){
         buildingChance = 0.05;
@@ -1315,11 +1404,20 @@ void MovePlayerCharacter(char userInputCharacter) {
     }
     //If we're not standing still then regen cost map
     if(userInputCharacter != '5' && userInputCharacter != ' ' && userInputCharacter != '.' && isValidMovement){
-        GenerateCostMap(0);
-        GenerateCostMap(1);
+        if(numTrainers > 0){
+            GenerateCostMap(0);
+            GenerateCostMap(1);
+        }
     }
     //After the player moves we move NPC'S
     MoveNPCS();
+    //After NPC's move lets check for a pokemon battle? Only applicable to grass tiles
+    if(currentMap->map[pc->mapX][pc->mapY] == SYMBOLS[SYMBOL_TALL_GRASS]){
+        int pokemonBattle = ((rand() % BATTLE_CHANCE) + 1);
+        if(pokemonBattle == 1){
+            EnterPokemonBattle();
+        }
+    }
 }
 
 void GetUserInput() {
@@ -1674,34 +1772,54 @@ void ParseFile(string inputFile) {
             if(currTypeName.type == "") currTypeName.type = "-1";
             //Add current type to list of types
             typeNames.push_back(currTypeName);
+        }else if(inputFile == "pokemon_stats"){
+            PokemonStats currStat = *new PokemonStats;
+            //Set ID
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currStat.ID = atoi(temp.c_str());
+            //Set Stat ID
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currStat.statID = atoi(temp.c_str());
+            //Set Base Stat
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currStat.base_Stat = atoi(temp.c_str());
+            //Set Effort
+            getline(currString, temp, ',');
+            if(temp == "") temp = "-1";
+            currStat.effort = atoi(temp.c_str());
         }
-
     }
-    PrintParsedData(inputFile);
+    //PrintParsedData(inputFile);
 }
 
 void OpenFile() {
-    cout << "Your chosen input file: " << inputFile << endl;
     const char* env = getenv("HOME");
-    if(env == NULL){
+    if(env == nullptr){
         cout << "Home dir not found?" << endl;
         return;
     }
-
     string homeEnv(env);
-    //Default location
-    currFile.open("/share/cs327/" + inputFile + ".csv");
-    if(currFile.fail()){
-        currFile.open(homeEnv + "/.poke327/" + inputFile + ".csv");
+    for(const string& inputFile: inputFiles){
+        //Default location
+        //cout << "Your chosen input file: " << inputFile << endl;
+        currFile.open("/share/cs327/" + inputFile + ".csv");
         if(currFile.fail()){
-            //I want to look in project directory into a folder named Pokedex
-            currFile.open("Pokedex/"+ inputFile + ".csv");
+            currFile.open(homeEnv + "/.poke327/" += inputFile + ".csv");
             if(currFile.fail()){
-                cout << "\nBro where the files at?\n---No file named '" + inputFile + ".csv' found in any of the three directories---\n";
+                //I want to look in project directory into a folder named Pokedex
+                currFile.open("Pokedex/" + inputFile + ".csv");
+                if(currFile.fail()){
+                    cout << "\nBro where the files at?\n---No file named '" + inputFile + ".csv' found in any of the three directories---\n";
+                }
             }
         }
+        ParseFile(inputFile);
+        currFile.close();
     }
-    ParseFile(inputFile);
+    cout << "End of opening all files" << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -1714,7 +1832,7 @@ int main(int argc, char *argv[]) {
         if(strstr(argv[i], "--numTrainers") || strstr(argv[i], "--numtrainers")){
             isNum = 1;
         }else{
-            inputFile = argv[i];
+            //inputFiles = argv[i];
         }
     }
     if(numTrainers > 1200){
@@ -1723,13 +1841,12 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     OpenFile();
-    return 0; //WE DON'T WANT TO LOAD ANYTHING FOR THIS ASSIGNMENT SO RETURN
     initscr();
     keypad(stdscr, TRUE);
     start_color();
     pc = static_cast<playerCharacter *>(malloc(sizeof(playerCharacter)));
     //Start with generating random
-    srand(time(NULL));
+    srand(time(nullptr));
     pc->isValidMovement = 1;
 
 

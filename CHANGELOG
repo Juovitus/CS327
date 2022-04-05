@@ -93,3 +93,6 @@
 4/1/2022
 ------------
     Changed input file method to command line instead of runtime to meet assignment specs. Oops.
+4/4/2022
+    Starting work on implementing pokemon battles
+    Changed cost map generation to only happen when there at least 1 trainer.
