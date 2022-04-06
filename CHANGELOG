@@ -96,3 +96,5 @@
 4/4/2022
     Starting work on implementing pokemon battles
     Changed cost map generation to only happen when there at least 1 trainer.
+4/5/2022
+    Finished adding pokemon encounters

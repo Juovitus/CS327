@@ -51,7 +51,7 @@ int quit_game = 0;
 char debugMessage[] = {'D', 'E', 'B', 'U', 'G', ' ', 'L', 'I', 'N', 'E'};
 ifstream currFile;
 double manhattanDistance = 999.99;
-string pokemonStats[] = {"", "hp", "attack", "defense", "special-attack", "special-defense", "speed", "accuracy", "evasion"};
+//string pokemonStats[] = {"", "hp", "attack", "defense", "special-attack", "special-defense", "speed", "accuracy", "evasion"};
 
 class nonPlayerCharacter{
 public:
@@ -113,9 +113,10 @@ class Pokemon{
 public:
     string name;
     //1 is male 2 is female
-    int ID, species, height, weight, baseEXP, order, is_default, level, gender;
+    int ID, speciesID, height, weight, baseEXP, order, is_default, level, gender,
+    hp, attack, defense, special_attack, special_defense, speed;
     //A pokemon can only have a max number of four moves.
-   PokemonMove moves[4];
+    vector <PokemonMove> moves;
     vector <PokemonMove> availableMoves;
     bool isShiny = false;
 };
@@ -126,6 +127,7 @@ vector<PokemonMove> pokemonMoves;
 vector<PokemonSpecies> pokemonSpecies;
 vector<Experience> experience;
 vector<TypeNames> typeNames;
+vector<PokemonStats> pokemonStats;
 
 typedef struct Point{
     int xPos, yPos;
@@ -388,7 +390,7 @@ void EnterPokemonBattle(){
     encounterPokemon.level = (rand()%(maxLevel-minLevel + 1) + minLevel);
     //Set all available pokemon moves
     for(PokemonMove pm: pokemonMoves){
-        if(pm.version == 19 && pm.pokemonID == encounterPokemon.species && pm.moveMethod == 1){
+        if(pm.version == 19 && pm.pokemonID == encounterPokemon.speciesID && pm.moveMethod == 1){
             encounterPokemon.availableMoves.push_back(pm);
         }
     }
@@ -405,18 +407,53 @@ void EnterPokemonBattle(){
     //Pokemon gender?
     encounterPokemon.gender = (rand()%(2-1 + 1) + 1);
     //Set pokemon moves?
-    unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-    std::default_random_engine e(seed);
-    uniform_int_distribution<int> distr(0, (int)(encounterPokemon.availableMoves.size() - 1));
-    if(encounterPokemon.availableMoves.size() > 2){
-        for(int i = 0; i < 2; i++){
-            encounterPokemon.moves[i] = encounterPokemon.availableMoves.at(distr(e));
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(0,(int)encounterPokemon.availableMoves.size() - 1);
+    for(int i = 0; i < 200; i++){
+        PokemonMove uniformMove = encounterPokemon.availableMoves.at(distribution(generator));
+        if(encounterPokemon.moves.size() < 2){
+            if(encounterPokemon.moves.size() == 0){
+                encounterPokemon.moves.push_back(uniformMove);
+            }else{
+                //Check if unique move, if it is then add it
+                bool unique = true;
+                for(PokemonMove pm: encounterPokemon.moves){
+                    if(pm.moveID == uniformMove.moveID){
+                        unique = false;
+                        break;
+                    }
+                }
+                if(unique){
+                    encounterPokemon.moves.push_back(uniformMove);
+                }
+            }
+        }else{
+            break;
         }
-    }else{
-        int numMove = 0;
-        for(PokemonMove pm: encounterPokemon.availableMoves){
-            encounterPokemon.moves[numMove] = pm;
-            numMove++;
+    }
+    //Add in pokemon IV'S?
+    for(PokemonStats pmstat: pokemonStats){
+        if(pmstat.ID == encounterPokemon.speciesID){
+            switch(pmstat.statID){
+                case 1:
+                    encounterPokemon.hp = pmstat.base_Stat;
+                    break;
+                case 2:
+                    encounterPokemon.attack = pmstat.base_Stat;
+                    break;
+                case 3:
+                    encounterPokemon.defense = pmstat.base_Stat;
+                    break;
+                case 4:
+                    encounterPokemon.special_attack = pmstat.base_Stat;
+                    break;
+                case 5:
+                    encounterPokemon.special_defense = pmstat.base_Stat;
+                    break;
+                case 6:
+                    encounterPokemon.speed = pmstat.base_Stat;
+                    break;
+            }
         }
     }
 
@@ -426,19 +463,28 @@ void EnterPokemonBattle(){
     while(!leaveBattle){
         //CLEAR SCREEN BEFORE STUFF
         clear();
-        printw("Temporary Poke battle page, Pokemon level: %d\nAvailable Moves at this level: %d\n", encounterPokemon.level, encounterPokemon.availableMoves.size());
-        printw("Pokemon Name: ");
+        printw("A wild pokemon has appeared! ~Battle Music~\n");
+        printw("Level %d ", encounterPokemon.level);
         if(encounterPokemon.isShiny){
             attron(COLOR_PAIR(SHINY_RATE));
-            printw("%s", printPokemonName.c_str());
+            printw("%s\n", printPokemonName.c_str());
             attroff(COLOR_PAIR(SHINY_RATE));
         }else{
-            printw("%s", printPokemonName.c_str());
+            printw("%s\n", printPokemonName.c_str());
         }
+        printw("Pokemon Moveset:\n");
         for(PokemonMove pm: encounterPokemon.moves){
-            printw("\nMove id: %d", pm.moveID);
+            for(Move m: moves){
+                if(m.ID == pm.moveID){
+                    printw("                %s\n", m.name.c_str());
+                }
+            }
         }
-        printw("\nUse < to exit battle.");
+        printw("Pokemon IVs:\n");
+        printw("    HP: %d  |  Attack: %d  |  Defense: %d  |  Special-Attack: %d\n", encounterPokemon.hp, encounterPokemon.attack, encounterPokemon.defense, encounterPokemon.special_attack);
+        printw("----------------------------------------------------------------------------\n");
+        printw("    Special-Defense: %d  |  Speed: %d\n", encounterPokemon.special_defense, encounterPokemon.speed);
+        printw("Use < to exit battle.\n");
         refresh();
         char userInput = getch();
         if(userInput == '<'){
@@ -1470,7 +1516,7 @@ void PrintParsedData(string inputFile){
     if(inputFile == "pokemon"){
         for(Pokemon p: pokemon){
             string outputString = "";
-            outputString += to_string(p.ID) + "," + p.name + "," + to_string(p.species) + "," + to_string(p.height) +
+            outputString += to_string(p.ID) + "," + p.name + "," + to_string(p.speciesID) + "," + to_string(p.height) +
                             "," + to_string(p.weight) + "," + to_string(p.baseEXP) + "," + to_string(p.order) +
                             "," + to_string(p.is_default);
             outputString = regex_replace(outputString, regex("-1"), " ");
@@ -1542,10 +1588,10 @@ void ParseFile(string inputFile) {
             currPoke.ID = atoi(temp.c_str());
             //Set Pokémon name
             getline(currString, currPoke.name, ',');
-            //Set Pokémon species
+            //Set Pokémon speciesID
             getline(currString, temp, ',');
             if(temp == "") temp = "-1";
-            currPoke.species = atoi(temp.c_str());
+            currPoke.speciesID = atoi(temp.c_str());
             //Set Pokémon height
             getline(currString, temp, ',');
             if(temp == "") temp = "-1";
@@ -1670,7 +1716,7 @@ void ParseFile(string inputFile) {
             getline(currString, temp, ',');
             if(temp == "") temp = "-1";
             currPokemonSpecies.generation = atoi(temp.c_str());
-            //Set Pokemon Species evolves from species id
+            //Set Pokemon Species evolves from speciesID id
             getline(currString, temp, ',');
             if(temp == "") temp = "-1";
             currPokemonSpecies.evolutionID = atoi(temp.c_str());
@@ -1738,7 +1784,7 @@ void ParseFile(string inputFile) {
             getline(currString, temp, ',');
             if(temp == "") temp = "-1";
             currPokemonSpecies.conquestOrder = atoi(temp.c_str());
-            //Add current species to list of species
+            //Add current speciesID to list of speciesID
             pokemonSpecies.push_back(currPokemonSpecies);
         }else if(inputFile == "experience"){
             Experience currExperience = *new Experience;
@@ -1790,6 +1836,7 @@ void ParseFile(string inputFile) {
             getline(currString, temp, ',');
             if(temp == "") temp = "-1";
             currStat.effort = atoi(temp.c_str());
+            pokemonStats.push_back(currStat);
         }
     }
     //PrintParsedData(inputFile);
