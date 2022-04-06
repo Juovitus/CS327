@@ -1,8 +1,7 @@
 #include <ctime>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "heap.h"
 #include<ncurses.h>
 #include <iostream>
@@ -11,7 +10,6 @@
 #include <string>
 #include <algorithm>
 #include <regex>
-#include <chrono>
 #include <random>
 
 using namespace std;
@@ -38,6 +36,7 @@ using namespace std;
 #define ESCAPE_KEY 27
 #define BATTLE_CHANCE 1 //Battle chance is 1/BATTLE_CHANCE when walking over grass
 #define SHINY_RATE 3   //Shiny rate is 1/SHINY RATE when encountering a pokemon
+#define MESSAGE_RED 99
 
 char SYMBOLS[] = {'C', 'M', '.', ';', '%', '#', '@', 'h', 'r', 'p', 'w', 's', 'n'};
 //COST ORDER = HIKER_COST->RIVAL_COST->PC->OTHERS
@@ -164,7 +163,7 @@ void DisplayMap(class mapGrid map){
             //Lets color code the output so it looks better :)
             char c;
 
-            if(pc != NULL && x == pc->mapX && y == pc->mapY){
+            if(pc != nullptr && x == pc->mapX && y == pc->mapY){
                 c = SYMBOLS[SYMBOL_PLAYER];
             }else{
                 c = map.map[x][y];
@@ -390,13 +389,15 @@ void EnterPokemonBattle(){
     encounterPokemon.level = (rand()%(maxLevel-minLevel + 1) + minLevel);
     //Set all available pokemon moves
     for(PokemonMove pm: pokemonMoves){
-        if(pm.version == 19 && pm.pokemonID == encounterPokemon.speciesID && pm.moveMethod == 1){
+        if(pm.version == 19 && pm.pokemonID == encounterPokemon.speciesID && pm.moveMethod == 1 && pm.level <= encounterPokemon.level){
             encounterPokemon.availableMoves.push_back(pm);
         }
     }
+    bool noMoves = false;
     //IDK why moves are empty sometimes but if they are add tackle IG?
     if(encounterPokemon.availableMoves.empty()){
         encounterPokemon.availableMoves.push_back(pokemonMoves.at(3));
+        noMoves = true;
     }
     //Set pokemon name, include if its shiny.
     string printPokemonName;
@@ -458,12 +459,17 @@ void EnterPokemonBattle(){
     }
 
     init_pair(SHINY_RATE, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(MESSAGE_RED, COLOR_RED, COLOR_BLACK);
+    init_pair(1, COLOR_MAGENTA, COLOR_BLACK);
     printPokemonName += encounterPokemon.name;
     int leaveBattle = 0;
     while(!leaveBattle){
         //CLEAR SCREEN BEFORE STUFF
         clear();
         printw("A wild pokemon has appeared! ~Battle Music~\n");
+        attron(COLOR_PAIR(1));
+        printw("Shiny chance is currently 1/%d, before you pog-off Zach ;)\n", SHINY_RATE);
+        attroff(COLOR_PAIR(1));
         printw("Level %d ", encounterPokemon.level);
         if(encounterPokemon.isShiny){
             attron(COLOR_PAIR(SHINY_RATE));
@@ -480,10 +486,16 @@ void EnterPokemonBattle(){
                 }
             }
         }
+        printw("----------------------------------------------------------------------------\n");
         printw("Pokemon IVs:\n");
         printw("    HP: %d  |  Attack: %d  |  Defense: %d  |  Special-Attack: %d\n", encounterPokemon.hp, encounterPokemon.attack, encounterPokemon.defense, encounterPokemon.special_attack);
-        printw("----------------------------------------------------------------------------\n");
         printw("    Special-Defense: %d  |  Speed: %d\n", encounterPokemon.special_defense, encounterPokemon.speed);
+        printw("----------------------------------------------------------------------------\n");
+        if(noMoves){
+            attron(COLOR_PAIR(MESSAGE_RED));
+            printw("Pokemon had no available moves so tackle was added.\n");
+            attroff(COLOR_PAIR(MESSAGE_RED));
+        }
         printw("Use < to exit battle.\n");
         refresh();
         char userInput = getch();

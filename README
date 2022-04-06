@@ -105,6 +105,9 @@ void ParseFile(string inputFiles)
 void PrintParsedData(string inputFiles)
     Outputs the given class information from the input file
 
+void EnterPokemonBattle()
+    Enters a pokemon battle and randomly generates everything needed.
+
 Controls:
     8 | k: Attempt to move player one cell up
     6 | l: Attempt to move player one cell to the right
